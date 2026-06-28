@@ -1,0 +1,106 @@
+========================================================= FORENSIQ
+INVESTIGATION FILE Case ID: FIQ-2026-041 Classification: Confidential
+=========================================================
+
+Incident Date: 17 June 2026
+
+Incident Time: Approximately 23:45
+
+Location: Hyderabad International Logistics Warehouse Shamshabad,
+Hyderabad
+
+  -------------------
+  WITNESS STATEMENT
+  -------------------
+
+My name is Sarah Connor. I work as a night security supervisor at the
+Hyderabad International Logistics Warehouse.
+
+At approximately 23:30, I noticed a red Ford Mustang (Registration:
+TS09AB4587) entering through Gate 3. The vehicle was driven by Rahul
+Verma. He was accompanied by another individual named Imran Khan.
+
+Although deliveries normally stop by 22:00, they claimed they had
+authorization from ShadowCorp Logistics Pvt. Ltd. I could not verify the
+authorization because our internal server was offline.
+
+Around 23:42, I observed Rahul unloading two large black metal
+containers from the vehicle. The containers were marked “Industrial
+Equipment”, but they appeared unusually heavy.
+
+Minutes later, I heard a loud metallic sound from Warehouse Section B.
+
+When I reached the area, I saw warehouse manager Ajay Mehta arguing with
+Rahul Verma.
+
+Ajay repeatedly shouted: “You were never supposed to bring the drives
+here.”
+
+Immediately afterward, Imran Khan picked up a crowbar lying near the
+loading dock.
+
+During the investigation, police recovered: - One blood-stained
+crowbar - Three encrypted SSD drives - One damaged surveillance DVR -
+Multiple fake shipment labels
+
+The surveillance cameras covering Section B stopped recording at exactly
+23:39.
+
+Our IT department later confirmed that someone remotely disabled the
+recording system.
+
+Financial investigators also discovered that approximately ₹48,50,000
+had been transferred from ShadowCorp Logistics Pvt. Ltd. to a shell
+company called Blue Horizon Exports exactly six hours before the
+incident.
+
+Bank records indicate that Rahul Verma was listed as an authorized
+signatory for Blue Horizon Exports.
+
+Vehicle GPS logs show that the Ford Mustang remained near the warehouse
+until 23:58 before traveling toward the Outer Ring Road.
+
+Police recovered fingerprints belonging to Rahul Verma on one of the
+encrypted SSD drives.
+
+  --------------------------
+  SECOND WITNESS STATEMENT
+  --------------------------
+
+My name is Priya Nair.
+
+I operate the fuel station opposite the warehouse.
+
+At approximately 23:20, I observed the same red Ford Mustang arrive.
+
+However, I clearly remember only one person exiting the vehicle.
+
+I did not see Imran Khan at that time.
+
+The driver purchased fuel using a corporate payment card issued to
+ShadowCorp Logistics.
+
+  ---------------------
+  INVESTIGATION NOTES
+  ---------------------
+
+Known Individuals - Sarah Connor (Security Supervisor) - Rahul Verma
+(Suspected Driver) - Imran Khan (Unknown Associate) - Ajay Mehta
+(Warehouse Manager) - Priya Nair (Independent Witness)
+
+Organizations - ShadowCorp Logistics Pvt. Ltd. - Blue Horizon Exports
+
+Vehicle - Red Ford Mustang - Registration: TS09AB4587
+
+Evidence - Blood-stained Crowbar - Encrypted SSD Drives (3) - Damaged
+DVR - Fake Shipment Labels - Fingerprint Evidence - GPS Logs - Bank
+Transfer Records
+
+Financial Activity Amount: ₹48,50,000 From: ShadowCorp Logistics Pvt.
+Ltd. To: Blue Horizon Exports Time: 17 June 2026, 17:45
+
+Possible Contradiction Sarah Connor states there were two occupants in
+the vehicle. Priya Nair states only one individual exited the vehicle.
+
+========================================================= END OF FILE
+=========================================================

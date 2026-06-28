@@ -7,7 +7,9 @@ from processors.image import extract_text_from_image
 from processors.audio import extract_text_from_audio
 from services.llm import extract_entities_and_events
 import os
+import json
 import shutil
+import re
 
 router = APIRouter()
 
@@ -38,61 +40,98 @@ async def process_evidence(file: UploadFile = File(...), db: Session = Depends(g
     if not text_content:
         raise HTTPException(status_code=500, detail="Failed to extract text from evidence.")
         
-    # Local Offline Extraction
+    # Local Offline Extraction (Shared Contract)
     structured_data = extract_entities_and_events(text_content)
     
-    # DB Insertion
-    case = db.query(models.Case).first()
-    if not case:
-        case = models.Case(title="Operation Hackathon")
-        db.add(case)
-        db.commit()
-        db.refresh(case)
+    risk_analysis = structured_data.get("risk_analysis", {})
+    primary_suspect = structured_data.get("primary_suspect", {})
+    insights = structured_data.get("investigation_insights", [])
+    recommended_actions = structured_data.get("recommended_actions", [])
+    
+    # DB Insertion: Create a NEW Case for every document to support Master Database View
+    case = models.Case(
+        title=f"Incident: {file.filename}",
+        summary=structured_data.get("executive_summary", ""),
+        risk_score=risk_analysis.get("score", 0.0),
+        risk_confidence=risk_analysis.get("confidence", 0.0),
+        risk_reasoning=json.dumps(risk_analysis.get("reasoning", [])),
+        primary_suspect_name=primary_suspect.get("entity", ""),
+        primary_suspect_confidence=primary_suspect.get("confidence", 0.0),
+        primary_suspect_reasoning=json.dumps(primary_suspect.get("reasoning", [])),
+        investigation_insights=json.dumps(insights),
+        recommended_actions=json.dumps(recommended_actions)
+    )
+    db.add(case)
+    db.commit()
+    db.refresh(case)
         
     doc = models.Document(case_id=case.case_id, filename=file.filename, type=file_extension.upper())
     db.add(doc)
     
     for person in structured_data.get("people", []):
-        db.add(models.Person(case_id=case.case_id, name=person.get("name", "Unknown"), role=person.get("role", "Unknown")))
+        db.add(models.Person(
+            case_id=case.case_id, 
+            name=person.get("name", "Unknown"), 
+            role=person.get("role", "Unknown"), 
+            confidence=person.get("confidence", 0.0)
+        ))
         
     for org in structured_data.get("organizations", []):
-        db.add(models.Organization(case_id=case.case_id, name=org.get("name", "Unknown")))
+        db.add(models.Organization(
+            case_id=case.case_id, 
+            name=org.get("name", "Unknown"),
+            confidence=org.get("confidence", 0.0)
+        ))
         
     for veh in structured_data.get("vehicles", []):
-        db.add(models.Vehicle(case_id=case.case_id, registration=veh.get("registration", "Unknown"), model=veh.get("model", "Unknown")))
+        db.add(models.Vehicle(
+            case_id=case.case_id, 
+            registration=veh.get("registration", "Unknown"), 
+            model=veh.get("model", "Unknown"),
+            confidence=veh.get("confidence", 0.0)
+        ))
         
     for ev in structured_data.get("evidence", []):
-        db.add(models.Evidence(case_id=case.case_id, type=ev.get("type", "Item"), description=ev.get("description", ""), source_document=file.filename))
+        db.add(models.Evidence(
+            case_id=case.case_id, 
+            type=ev.get("type", "Item"), 
+            description=ev.get("description", ""), 
+            importance=ev.get("importance", "Medium"),
+            linked_people=ev.get("linked_people", ""),
+            linked_events=ev.get("linked_events", ""),
+            reasoning=ev.get("reasoning", ""),
+            confidence=ev.get("confidence", 0.0),
+            source_document=file.filename
+        ))
 
-    for event in structured_data.get("events", []):
-        db.add(models.Event(case_id=case.case_id, event=event.get("description", "Event"), location=event.get("location", ""), time=event.get("time", "")))
+    for event in structured_data.get("timeline", []):
+        db.add(models.Event(
+            case_id=case.case_id, 
+            event=event.get("title", "Event"), 
+            location=event.get("location", ""), 
+            time=event.get("timestamp", ""),
+            description=event.get("description", ""),
+            entities_involved=event.get("entities_involved", ""),
+            supporting_evidence=event.get("supporting_evidence", ""),
+            reasoning=event.get("reasoning", ""),
+            confidence=event.get("confidence", 0.0)
+        ))
         
     for rel in structured_data.get("relationships", []):
-        db.add(models.Relationship(case_id=case.case_id, entity1=rel.get("entity1", ""), relation=rel.get("relation", ""), entity2=rel.get("entity2", "")))
+        db.add(models.Relationship(
+            case_id=case.case_id, 
+            entity1=rel.get("source_entity", ""), 
+            relation=rel.get("relationship_type", ""), 
+            entity2=rel.get("target_entity", ""),
+            supporting_evidence=rel.get("supporting_evidence", ""),
+            reasoning=rel.get("reasoning", ""),
+            confidence=rel.get("confidence", 0.0)
+        ))
 
     db.commit()
     
     return {"status": "success", "structured_intelligence": structured_data}
 
-@router.get("/cases")
-def get_cases(db: Session = Depends(get_db)):
-    return db.query(models.Case).all()
-
-@router.get("/timeline/{case_id}")
-def get_timeline(case_id: int, db: Session = Depends(get_db)):
-    # Very basic sort by time string
-    events = db.query(models.Event).filter(models.Event.case_id == case_id).all()
-    return sorted(events, key=lambda x: str(x.time))
-
-@router.get("/entities/{case_id}")
-def get_entities(case_id: int, db: Session = Depends(get_db)):
-    return {
-        "people": db.query(models.Person).filter(models.Person.case_id == case_id).all(),
-        "organizations": db.query(models.Organization).filter(models.Organization.case_id == case_id).all(),
-        "vehicles": db.query(models.Vehicle).filter(models.Vehicle.case_id == case_id).all(),
-        "evidence": db.query(models.Evidence).filter(models.Evidence.case_id == case_id).all(),
-        "relationships": db.query(models.Relationship).filter(models.Relationship.case_id == case_id).all(),
-    }
 
 @router.get("/search")
 def search_evidence(query: str, db: Session = Depends(get_db)):

@@ -1,0 +1,29 @@
+OPERATION BLACKOUT - MAJOR SYNDICATE INVESTIGATION 
+DATE: November 15, 2026
+CASE OFFICER: Detective Sarah Jenkins
+LOCATION: New York City & Miami
+
+NARRATIVE SUMMARY:
+At 11:45 PM on November 14, an explosion occurred at a warehouse located at Pier 42, Brooklyn. 
+Fire units responded at 11:55 PM and recovered several items from the debris, including an encrypted laptop (Evidence ID: L-99) and a burned manifest belonging to "Global Exports LLC". 
+
+WITNESS STATEMENT - MARCO VERDI (Dock Worker)
+Marco Verdi states he arrived at the pier at 10:00 PM for his shift. At approximately 11:15 PM, he saw a black Mercedes G-Class (Registration: NY-77-MOB) park near the warehouse. Two men exited. One was known locally as "Jimmy Falcone", a suspected enforcer for the "Falcone Crime Family". The other was an unidentified male carrying a heavy duffel bag. Verdi claims Jimmy handed a thick envelope of cash to the warehouse manager, Arthur Pendelton, before entering the building.
+
+WITNESS STATEMENT - ARTHUR PENDELTON (Warehouse Manager)
+Arthur Pendelton contradicts Verdi's statement. Pendelton states the explosion happened much earlier, at 10:30 PM. Furthermore, Pendelton claims he was at a diner two miles away when the explosion occurred and denies receiving any cash or ever meeting Jimmy Falcone. Pendelton insists Global Exports LLC is a legitimate furniture business.
+
+FINANCIAL ANALYSIS REPORT - AGENT CHEN
+Agent Chen executed a warrant on Global Exports LLC's offshore accounts. The records indicate a massive wire transfer of $2.5 Million to "Apex Security Group" on November 12, just two days prior to the explosion. Furthermore, Arthur Pendelton is listed as the primary signatory for Apex Security Group, establishing a direct financial link between the warehouse manager and the offshore entity.
+
+FORENSICS REPORT - LAB TECH DAVID
+The encrypted laptop (L-99) was partially decrypted. It contained emails between Jimmy Falcone and a user named "Ghost". One email sent on Nov 13 stated: "The shipment arrives at Pier 42 tomorrow night. Use the C-4 explosives to clear the trail." Traces of C-4 residue were found on a piece of scrap metal recovered from the blast radius (Evidence ID: M-12).
+
+POLICE ACTION - NOV 15 08:00 AM
+SWAT teams raided a Miami safehouse owned by the Falcone Crime Family. Jimmy Falcone was apprehended attempting to flee in a white speedboat (Registration: MIA-99-WTR). Inside the safehouse, officers recovered a loaded AK-47 assault rifle and $50,000 in banded cash.
+
+RELATIONSHIP SUMMARY:
+- Arthur Pendelton is the owner of Apex Security Group.
+- Jimmy Falcone is an enforcer for the Falcone Crime Family.
+- Jimmy Falcone transferred money to Arthur Pendelton.
+- Global Exports LLC transferred money to Apex Security Group.
