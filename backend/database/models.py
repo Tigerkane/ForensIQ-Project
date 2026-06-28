@@ -21,9 +21,10 @@ class Case(Base):
     
     events = relationship("Event", back_populates="case")
     people = relationship("Person", back_populates="case")
-    organizations = relationship("Organization", back_populates="case")
-    vehicles = relationship("Vehicle", back_populates="case")
-    evidence = relationship("Evidence", back_populates="case")
+    organizations = relationship("Organization", back_populates="case", cascade="all, delete-orphan")
+    vehicles = relationship("Vehicle", back_populates="case", cascade="all, delete-orphan")
+    weapons = relationship("Weapon", back_populates="case", cascade="all, delete-orphan")
+    evidence = relationship("Evidence", back_populates="case", cascade="all, delete-orphan")
     relationships = relationship("Relationship", back_populates="case")
     documents = relationship("Document", back_populates="case")
 
@@ -70,6 +71,16 @@ class Vehicle(Base):
     confidence = Column(Float, nullable=True)
     
     case = relationship("Case", back_populates="vehicles")
+
+class Weapon(Base):
+    __tablename__ = "weapons"
+    weapon_id = Column(Integer, primary_key=True, index=True)
+    case_id = Column(Integer, ForeignKey("cases.case_id"))
+    type = Column(String) # e.g. "Firearm", "Blunt Object"
+    description = Column(String)
+    confidence = Column(Float, nullable=True)
+    
+    case = relationship("Case", back_populates="weapons")
 
 class Evidence(Base):
     __tablename__ = "evidence"

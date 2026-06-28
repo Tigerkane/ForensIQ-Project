@@ -24,7 +24,8 @@ def extract_entities_and_events(text: str) -> dict:
     - "people": List all people. Provide role and dynamic confidence.
     - "organizations": List companies or groups. Provide dynamic confidence.
     - "vehicles": List vehicles with registration and model. Provide dynamic confidence.
-    - "evidence": List physical/digital evidence. Include type, description, importance ("Critical", "High", "Medium", "Low"), dynamic confidence, linked people/events, and "reasoning" for why it is important.
+    - "weapons": Extract any weapons, firearms, blunt objects, or destructive devices. Include type and description. Provide dynamic confidence.
+    - "evidence": List physical/digital evidence. Include type, description, importance ("Critical", "High", "Medium", "Low"), dynamic confidence, linked people/events, and "reasoning". EXCLUDE WEAPONS FROM THIS LIST (put them in the 'weapons' array instead).
     - "timeline": Extract EVERY significant event (action, observation, transaction, communication, system change, discovery, finding). If no timestamp exists, preserve the logical order. Do not just summarize paragraphs; break the document into meaningful chronological investigation events. Include timestamp, location, title, description, entities_involved, supporting_evidence, dynamic confidence, and "reasoning" explaining its significance.
     - "relationships": Build a COMPLETE knowledge graph. Identify meaningful connections between ANY entities (Person↔Person, Person↔Device, Org↔Transaction, Event↔Evidence). Infer relationships logically from the entire text. Include source_entity, relationship_type, target_entity, dynamic confidence, supporting_evidence, and "reasoning".
     - "contradictions": List any conflicting statements or evidence.
@@ -51,6 +52,7 @@ def extract_entities_and_events(text: str) -> dict:
       "people": [{{ "name": "string", "role": "string", "confidence": 0.84 }}],
       "organizations": [{{ "name": "string", "confidence": 0.96 }}],
       "vehicles": [{{ "registration": "string", "model": "string", "confidence": 0.98 }}],
+      "weapons": [{{ "type": "string", "description": "string", "confidence": 0.95 }}],
       "evidence": [{{ "type": "string", "description": "string", "importance": "string", "confidence": 0.94, "linked_people": "string", "linked_events": "string", "reasoning": "string" }}],
       "relationships": [{{ "source_entity": "string", "relationship_type": "string", "target_entity": "string", "confidence": 0.88, "supporting_evidence": "string", "reasoning": "string" }}],
       "contradictions": [{{ "description": "string" }}]

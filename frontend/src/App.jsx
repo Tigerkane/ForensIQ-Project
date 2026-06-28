@@ -6,7 +6,7 @@ function App() {
   const [loadingText, setLoadingText] = useState("Analyzing Evidence...");
   const [intelligence, setIntelligence] = useState(null);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("timeline");
+  const [activeTab, setActiveTab] = useState("summary");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -93,10 +93,10 @@ function App() {
       )}
 
       <main className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        <div className="xl:col-span-1 space-y-6">
-          <div className="bg-gray-900 p-5 rounded-xl border border-gray-800 shadow-lg">
-            <h2 className="text-lg font-semibold mb-3 text-gray-200">Evidence Upload</h2>
-            <div className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${isDragging ? 'border-blue-500 bg-blue-900/20 scale-105' : 'border-gray-700 bg-gray-950 hover:border-blue-500'}`} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} onClick={() => document.getElementById('fileUpload').click()}>
+        <div className="xl:col-span-1 space-y-3">
+          <div className="bg-gray-900 p-3 rounded-xl border border-gray-800 shadow-lg">
+            <h2 className="text-sm font-semibold mb-2 text-gray-200">Evidence Upload</h2>
+            <div className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all ${isDragging ? 'border-blue-500 bg-blue-900/20 scale-105' : 'border-gray-700 bg-gray-950 hover:border-blue-500'}`} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} onClick={() => document.getElementById('fileUpload').click()}>
               <input id="fileUpload" type="file" multiple onChange={handleFileChange} className="hidden" />
               <svg className={`w-12 h-12 mx-auto mb-3 transition-colors ${isDragging ? 'text-blue-500' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
               <p className="text-sm font-medium text-gray-300">{files.length > 0 ? <span className="text-blue-500 font-bold">{files.length} File(s) Ready</span> : "Drag & Drop Evidence"}</p>
@@ -108,84 +108,17 @@ function App() {
             </button>
           </div>
           
-          {intelligence?.risk_analysis && (
-             <div className="bg-orange-900/20 border border-orange-500/50 p-4 rounded-xl shadow-lg">
-               <h3 className="text-orange-400 font-bold text-sm mb-2">Case Risk Score</h3>
-               <div className="w-full bg-gray-800 rounded-full h-4 mt-2 mb-1">
-                 <div className="bg-orange-500 h-4 rounded-full" style={{width: `${(intelligence.risk_analysis.score/10)*100}%`}}></div>
-               </div>
-               <div className="flex justify-between items-center mb-3">
-                 <span className="text-xs text-orange-200/50">Conf: {Math.round(intelligence.risk_analysis.confidence*100)}%</span>
-                 <span className="text-xs text-orange-300 font-bold">{intelligence.risk_analysis.score} / 10</span>
-               </div>
-               <ul className="text-xs text-orange-200 space-y-1">
-                 {intelligence.risk_analysis.reasoning?.map((r, i) => <li key={i}>• {r}</li>)}
-               </ul>
-             </div>
-          )}
-          
-          {intelligence?.primary_suspect && intelligence.primary_suspect.entity && (
-             <div className="bg-yellow-900/20 border border-yellow-500/50 p-4 rounded-xl shadow-lg">
-               <h3 className="text-yellow-400 font-bold text-sm mb-2">Primary Suspect</h3>
-               <div className="flex justify-between items-end mb-2">
-                 <p className="text-lg text-yellow-100 font-bold">{intelligence.primary_suspect.entity}</p>
-                 <span className="text-xs text-yellow-300/70">{Math.round(intelligence.primary_suspect.confidence*100)}% sure</span>
-               </div>
-               <div className="space-y-3">
-                 <div>
-                   <p className="text-xs font-semibold text-yellow-500 mb-1">Reasoning:</p>
-                   <ul className="text-xs text-yellow-200/80 space-y-1">
-                     {intelligence.primary_suspect.reasoning?.map((r, i) => <li key={i}>- {r}</li>)}
-                   </ul>
-                 </div>
-                 {intelligence.primary_suspect.supporting_evidence?.length > 0 && (
-                 <div>
-                   <p className="text-xs font-semibold text-yellow-500 mb-1">Key Evidence:</p>
-                   <ul className="text-xs text-yellow-200/80 space-y-1">
-                     {intelligence.primary_suspect.supporting_evidence?.map((r, i) => <li key={i}>- {r}</li>)}
-                   </ul>
-                 </div>
-                 )}
-               </div>
-             </div>
-          )}
-
-          {intelligence?.investigation_insights?.length > 0 && (
-             <div className="bg-cyan-900/20 border border-cyan-500/50 p-4 rounded-xl shadow-lg">
-               <h3 className="text-cyan-400 font-bold text-sm mb-2">Investigation Insights</h3>
-               <ul className="text-xs text-cyan-200 space-y-2">
-                 {intelligence.investigation_insights.map((c, i) => <li key={i}>• {c}</li>)}
-               </ul>
-             </div>
-          )}
-
-          {intelligence?.recommended_actions?.length > 0 && (
-             <div className="bg-green-900/20 border border-green-500/50 p-4 rounded-xl shadow-lg">
-               <h3 className="text-green-400 font-bold text-sm mb-2">Recommended Actions</h3>
-               <ul className="text-xs text-green-200 space-y-2">
-                 {intelligence.recommended_actions.map((a, i) => (
-                   <li key={i} className="flex gap-2">
-                     <span className="text-green-500">→</span> <span>{a}</span>
-                   </li>
-                 ))}
-               </ul>
-             </div>
-          )}
-
-          {intelligence?.contradictions?.length > 0 && (
-             <div className="bg-red-900/20 border border-red-500/50 p-4 rounded-xl shadow-lg">
-               <h3 className="text-red-400 font-bold text-sm mb-2">Contradictions Detected</h3>
-               <ul className="text-xs text-red-300 space-y-2">
-                 {intelligence.contradictions.map((c, i) => <li key={i}>• {c.description}</li>)}
-               </ul>
-             </div>
+          {intelligence && (
+            <button onClick={() => setActiveTab('summary')} className={`w-full py-3 mt-2 rounded-lg font-bold transition-all ${activeTab === 'summary' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}>
+              View Executive Summary
+            </button>
           )}
         </div>
         
         <div className="xl:col-span-3 bg-gray-900 rounded-xl border border-gray-800 flex flex-col h-[900px] shadow-lg relative">
           
           <div className="flex border-b border-gray-800 bg-gray-950 rounded-t-xl overflow-hidden">
-            {['timeline', 'entities', 'relationships'].map(tab => (
+            {['summary', 'timeline', 'entities', 'relationships'].map(tab => (
               <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-4 text-sm font-bold capitalize transition-colors ${activeTab === tab ? 'bg-gray-800 text-blue-500 border-b-2 border-blue-500' : 'text-gray-500 hover:bg-gray-800/50'}`}>
                 {tab}
               </button>
@@ -196,6 +129,89 @@ function App() {
             {!currentData && !loading && <div className="h-full flex items-center justify-center"><p className="text-gray-600 italic">Upload an investigation file or view Master Database.</p></div>}
             {loading && <div className="h-full flex flex-col items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div><p className="text-blue-500 animate-pulse font-medium">{loadingText}</p></div>}
             
+            {intelligence && activeTab === 'summary' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10">
+                {/* Left Column */}
+                <div className="space-y-6">
+                  {intelligence.risk_analysis && (
+                     <div className="bg-orange-900/20 border border-orange-500/50 p-6 rounded-xl shadow-lg">
+                       <h3 className="text-orange-400 font-bold text-lg mb-3">Case Risk Score</h3>
+                       <div className="w-full bg-gray-800 rounded-full h-4 mt-2 mb-2">
+                         <div className="bg-orange-500 h-4 rounded-full" style={{width: `${(intelligence.risk_analysis.score/10)*100}%`}}></div>
+                       </div>
+                       <div className="flex justify-between items-center mb-4">
+                         <span className="text-sm text-orange-200/50">Confidence: {Math.round(intelligence.risk_analysis.confidence*100)}%</span>
+                         <span className="text-sm text-orange-300 font-bold">{intelligence.risk_analysis.score} / 10</span>
+                       </div>
+                       <ul className="text-sm text-orange-200 space-y-2">
+                         {intelligence.risk_analysis.reasoning?.map((r, i) => <li key={i}>• {r}</li>)}
+                       </ul>
+                     </div>
+                  )}
+
+                  {intelligence.investigation_insights?.length > 0 && (
+                     <div className="bg-cyan-900/20 border border-cyan-500/50 p-6 rounded-xl shadow-lg">
+                       <h3 className="text-cyan-400 font-bold text-lg mb-4">Investigation Insights</h3>
+                       <ul className="text-sm text-cyan-200 space-y-3">
+                         {intelligence.investigation_insights.map((c, i) => <li key={i}>• {c}</li>)}
+                       </ul>
+                     </div>
+                  )}
+                  
+                  {intelligence.contradictions?.length > 0 && (
+                     <div className="bg-red-900/20 border border-red-500/50 p-6 rounded-xl shadow-lg">
+                       <h3 className="text-red-400 font-bold text-lg mb-4">Contradictions Detected</h3>
+                       <ul className="text-sm text-red-300 space-y-3">
+                         {intelligence.contradictions.map((c, i) => <li key={i}>• {c.description}</li>)}
+                       </ul>
+                     </div>
+                  )}
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-6">
+                  {intelligence.primary_suspect && intelligence.primary_suspect.entity && (
+                     <div className="bg-yellow-900/20 border border-yellow-500/50 p-6 rounded-xl shadow-lg">
+                       <h3 className="text-yellow-400 font-bold text-lg mb-3">Primary Suspect</h3>
+                       <div className="flex justify-between items-end mb-4">
+                         <p className="text-2xl text-yellow-100 font-bold">{intelligence.primary_suspect.entity}</p>
+                         <span className="text-sm text-yellow-300/70">{Math.round(intelligence.primary_suspect.confidence*100)}% sure</span>
+                       </div>
+                       <div className="space-y-4">
+                         <div>
+                           <p className="text-sm font-semibold text-yellow-500 mb-2">Reasoning:</p>
+                           <ul className="text-sm text-yellow-200/80 space-y-2">
+                             {intelligence.primary_suspect.reasoning?.map((r, i) => <li key={i}>- {r}</li>)}
+                           </ul>
+                         </div>
+                         {intelligence.primary_suspect.supporting_evidence?.length > 0 && (
+                         <div>
+                           <p className="text-sm font-semibold text-yellow-500 mb-2">Key Evidence:</p>
+                           <ul className="text-sm text-yellow-200/80 space-y-2">
+                             {intelligence.primary_suspect.supporting_evidence?.map((r, i) => <li key={i}>- {r}</li>)}
+                           </ul>
+                         </div>
+                         )}
+                       </div>
+                     </div>
+                  )}
+
+                  {intelligence.recommended_actions?.length > 0 && (
+                     <div className="bg-green-900/20 border border-green-500/50 p-6 rounded-xl shadow-lg">
+                       <h3 className="text-green-400 font-bold text-lg mb-4">Recommended Actions</h3>
+                       <ul className="text-sm text-green-200 space-y-3">
+                         {intelligence.recommended_actions.map((a, i) => (
+                           <li key={i} className="flex gap-3">
+                             <span className="text-green-500">→</span> <span>{a}</span>
+                           </li>
+                         ))}
+                       </ul>
+                     </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {intelligence && activeTab === 'timeline' && intelligence.executive_summary && (
               <div className="mb-6 bg-gray-800 p-5 rounded-lg border border-gray-700 shadow-md">
                 <h3 className="text-blue-400 font-bold mb-2">Executive Intelligence Briefing</h3>
@@ -232,18 +248,22 @@ function App() {
                 <div className="bg-gray-950 p-5 rounded-lg border border-gray-800"><h3 className="text-sm font-bold text-green-500 mb-3 border-b border-gray-800 pb-2">People</h3><ul className="text-xs space-y-2">{currentData.people?.map((p, i) => <li key={i} className="flex justify-between items-center"><span className="text-white font-semibold">{p.name}</span> <div className="flex gap-2"><span className="text-gray-400 bg-gray-900 px-2 rounded">{p.role}</span>{p.confidence && <span className="text-green-400 bg-green-900/20 px-1 rounded">{Math.round(p.confidence*100)}%</span>}</div></li>)}</ul></div>
                 <div className="bg-gray-950 p-5 rounded-lg border border-gray-800"><h3 className="text-sm font-bold text-yellow-500 mb-3 border-b border-gray-800 pb-2">Organizations</h3><ul className="text-xs space-y-2">{currentData.organizations?.map((o, i) => <li key={i} className="flex justify-between items-center"><span className="text-white font-medium">{o.name}</span>{o.confidence && <span className="text-yellow-400 bg-yellow-900/20 px-1 rounded">{Math.round(o.confidence*100)}%</span>}</li>)}</ul></div>
                 <div className="bg-gray-950 p-5 rounded-lg border border-gray-800"><h3 className="text-sm font-bold text-purple-500 mb-3 border-b border-gray-800 pb-2">Vehicles</h3><ul className="text-xs space-y-2">{currentData.vehicles?.map((v, i) => <li key={i} className="flex justify-between items-center"><div><span className="text-white font-semibold">{v.registration}</span> - {v.model}</div>{v.confidence && <span className="text-purple-400 bg-purple-900/20 px-1 rounded">{Math.round(v.confidence*100)}%</span>}</li>)}</ul></div>
+                <div className="bg-gray-950 p-5 rounded-lg border border-gray-800"><h3 className="text-sm font-bold text-red-500 mb-3 border-b border-gray-800 pb-2">Weapons</h3><ul className="text-xs space-y-2">{currentData.weapons?.map((w, i) => <li key={i} className="flex flex-col gap-1 border-b border-gray-800/50 pb-2"><div className="flex justify-between items-center"><span className="text-red-400 font-bold">[{w.type}]</span> {w.confidence && <span className="text-red-400 bg-red-900/20 px-1 rounded">{Math.round(w.confidence*100)}%</span>}</div><span className="text-gray-300">{w.description}</span></li>)}</ul></div>
                 <div className="bg-gray-950 p-5 rounded-lg border border-gray-800"><h3 className="text-sm font-bold text-pink-500 mb-3 border-b border-gray-800 pb-2">Evidence</h3><ul className="text-xs space-y-3">{currentData.evidence?.map((ev, i) => <li key={i} className="flex flex-col gap-1 border-b border-gray-800/50 pb-2"><div className="flex justify-between items-center"><span className="text-pink-400 font-bold">[{ev.type}]</span> {ev.confidence && <span className="text-[10px] text-pink-500/50">{Math.round(ev.confidence*100)}% conf</span>}</div><span className="text-gray-300">{ev.description}</span>{ev.reasoning && <span className="text-[10px] text-pink-200/70 italic mt-1">{ev.reasoning}</span>}<div className="flex flex-wrap gap-2 mt-1">{ev.importance && <span className={`text-[10px] px-2 py-0.5 rounded ${ev.importance==='Critical'?'bg-red-700/50 text-red-200': ev.importance==='High'?'bg-red-900/30 text-red-400': ev.importance==='Medium'?'bg-yellow-900/30 text-yellow-400':'bg-gray-800 text-gray-400'}`}>{ev.importance}</span>}{ev.linked_people && <span className="text-[10px] text-gray-400 bg-gray-900 px-2 py-0.5 rounded">People: {ev.linked_people}</span>}</div></li>)}</ul></div>
               </div>
             )}
             
             {(currentData && activeTab === 'relationships' && !loading) && (
-              <div className="space-y-4 max-w-2xl mx-auto mt-4">
+              <div className="space-y-4 max-w-5xl mx-auto mt-4">
                 {currentData.relationships?.map((r, i) => (
                   <div key={i} className="flex items-center justify-between bg-gray-950 p-4 rounded-xl border border-gray-800 shadow-md hover:border-gray-700 transition-colors">
                     <span className="text-blue-300 text-sm font-bold px-4 py-2 bg-blue-900/20 border border-blue-800/50 rounded-lg whitespace-nowrap">{r.entity1 || r.source_entity}</span>
                     <div className="flex-1 flex flex-col items-center px-4">
                         <span className="text-gray-400 text-xs tracking-widest uppercase mb-1 text-center">{r.relation || r.relationship || r.relationship_type}</span>
-                        <div className="w-full h-px bg-gradient-to-r from-transparent via-gray-500 to-transparent"></div>
+                        <div className="w-full flex items-center px-2">
+                            <div className="h-px bg-gray-500 flex-1"></div>
+                            <div className="w-0 h-0 border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent border-l-[6px] border-l-gray-500"></div>
+                        </div>
                         {r.confidence && <span className="text-[10px] text-gray-500 mt-1">{Math.round(r.confidence*100)}% conf {r.evidence_reference || r.supporting_evidence ? `• ${r.evidence_reference || r.supporting_evidence}`:''}</span>}
                         {r.reasoning && <span className="text-[10px] text-blue-200/70 italic mt-1 text-center max-w-[200px] leading-tight">{r.reasoning}</span>}
                     </div>

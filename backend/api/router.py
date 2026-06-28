@@ -84,12 +84,10 @@ async def process_evidence(file: UploadFile = File(...), db: Session = Depends(g
         ))
         
     for veh in structured_data.get("vehicles", []):
-        db.add(models.Vehicle(
-            case_id=case.case_id, 
-            registration=veh.get("registration", "Unknown"), 
-            model=veh.get("model", "Unknown"),
-            confidence=veh.get("confidence", 0.0)
-        ))
+        db.add(models.Vehicle(case_id=case.case_id, registration=veh.get("registration", ""), model=veh.get("model", ""), confidence=veh.get("confidence", 0.0)))
+        
+    for wep in structured_data.get("weapons", []):
+        db.add(models.Weapon(case_id=case.case_id, type=wep.get("type", ""), description=wep.get("description", ""), confidence=wep.get("confidence", 0.0)))
         
     for ev in structured_data.get("evidence", []):
         db.add(models.Evidence(
