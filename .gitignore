@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+backend/venv/
+venv/
+env/
+.env
+
+# Node
+frontend/node_modules/
+node_modules/
+dist/
+build/
+.npm/
+
+# Database
+*.sqlite3
+*.db
+forensiq.db
+
+# OS
+.DS_Store
+Thumbs.db
