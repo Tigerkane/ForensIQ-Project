@@ -1,21 +1,259 @@
-# ForensIQ – Offline Investigation Intelligence Platform 🕵️‍♂️
+# ForensIQ
+### Offline Investigation Intelligence Platform
 
-**The CPU-First Hackathon Project**
-*Transform scattered evidence into connected investigation intelligence—completely offline.*
+> **A hundred eyes. One truth.**
 
-## The Problem
-Criminal investigations involve hundreds of unstructured documents: FIRs, witness statements, forensic reports, and evidence logs. Investigators spend countless hours manually connecting information across these sources, increasing the chances of missing critical links or contradictions. Uploading this highly sensitive data to cloud AI is legally prohibited.
+ForensIQ is an **offline-first, CPU-optimized AI platform** that transforms unstructured criminal investigation data into structured, connected investigation intelligence. It enables investigators to process case files without relying on cloud services, ensuring privacy, security, and usability even in air-gapped environments.
 
-## The Solution
-**ForensIQ** is an offline-first, CPU-powered AI platform that ingests unstructured investigation documents and extracts structured entities (people, locations, events, evidence). It automatically links related evidence and builds a chronological investigation timeline. 
+---
 
-All processing happens locally on the investigator's machine, ensuring sensitive case data never leaves the device.
+## 🚨 Problem Statement
 
-## Core Features
-1. **Entity Extraction**: Uses local Small Language Models (SLMs) to pull out suspects, witnesses, locations, and timestamps from raw text.
-2. **Timeline Generation**: Automatically maps extracted events onto a chronological timeline.
-3. **Contradiction Detection**: Flags conflicting statements across different documents.
-4. **100% Air-Gapped**: Runs entirely on local CPU inference (`llama.cpp`), strictly adhering to the "Network OFF" hackathon rule.
+Modern investigations involve hundreds of scattered documents and evidence sources, including:
 
-## License
-Open Source under GPL-3.0 (Strong Copyleft).
+- FIRs
+- Witness statements
+- Forensic reports
+- Medical reports
+- Crime scene photographs
+- Officer voice notes
+- Scanned evidence documents
+
+Investigators manually connect information across these sources, making the process slow, error-prone, and prone to overlooking crucial evidence or contradictions.
+
+ForensIQ automates this process by extracting structured information and linking related evidence into a unified investigation timeline—all **offline**.
+
+---
+
+## 💡 Solution
+
+ForensIQ processes multiple input formats:
+
+- 📄 PDF Documents
+- 🖼️ Images
+- 🎙️ Audio Recordings
+
+The system extracts and structures information such as:
+
+- People
+- Locations
+- Events
+- Dates & Time
+- Evidence
+- Vehicles
+- Weapons
+- Financial Transactions
+
+It then automatically:
+
+- Builds a chronological investigation timeline
+- Links related entities across documents
+- Detects conflicting statements
+- Highlights missing or incomplete evidence
+- Stores everything locally for fast retrieval
+
+---
+
+## 🏗️ System Workflow
+
+```
+             PDF / Image / Audio
+                     │
+                     ▼
+          Text Extraction Layer
+      (OCR / Whisper / PDF Parser)
+                     │
+                     ▼
+          Text Normalization
+                     │
+                     ▼
+      Local Small Language Model
+                     │
+                     ▼
+     Structured Investigation JSON
+                     │
+                     ▼
+          Relationship Linking
+                     │
+                     ▼
+      Timeline & Intelligence Engine
+                     │
+                     ▼
+             SQLite Database
+                     │
+                     ▼
+            Investigation Dashboard
+```
+
+---
+
+## ✨ Features
+
+- Offline-first architecture
+- CPU-only inference
+- Local OCR
+- Local Speech-to-Text
+- Structured JSON extraction
+- Entity extraction
+- Relationship mapping
+- Investigation timeline generation
+- Contradiction detection
+- Local SQLite database
+- Fast evidence search
+- Privacy-first (No cloud APIs)
+
+---
+
+## 🧠 AI Pipeline
+
+### Input
+
+- Investigation PDFs
+- Evidence Images
+- Officer Voice Notes
+
+↓
+
+### Extraction
+
+- OCR
+- Speech-to-Text
+- PDF Parsing
+
+↓
+
+### AI Processing
+
+Local Small Language Model extracts:
+
+- People
+- Events
+- Locations
+- Dates
+- Evidence
+- Relationships
+
+↓
+
+### Intelligence Generation
+
+- Timeline
+- Linked Evidence
+- Contradictions
+- Missing Evidence
+
+↓
+
+### Storage
+
+SQLite Database
+
+---
+
+## 📦 Structured Output Example
+
+```json
+{
+  "case_id": "CASE-1042",
+  "people": [
+    "Rahul Sharma",
+    "Inspector Ravi"
+  ],
+  "location": "Hyderabad",
+  "event": "Money Transfer",
+  "date": "2026-06-24",
+  "evidence_type": "Bank Statement",
+  "related_documents": [
+    "FIR.pdf",
+    "Witness_1.pdf"
+  ],
+  "confidence": 0.94
+}
+```
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+
+- React
+- Tailwind CSS
+
+### Backend
+
+- FastAPI
+- Python
+
+### AI
+
+- OCR (Tesseract / PaddleOCR)
+- Whisper.cpp
+- Ollama / llama.cpp
+- Small Local Language Model
+
+### Database
+
+- SQLite
+
+---
+
+## 📂 Project Structure
+
+```
+ForensIQ/
+
+├── frontend/
+│
+├── backend/
+│
+├── api/
+│
+├── processors/
+│   ├── pdf.py
+│   ├── image.py
+│   └── audio.py
+│
+├── ai/
+│   ├── prompts.py
+│   ├── inference.py
+│   └── entity_linking.py
+│
+├── database/
+│
+├── uploads/
+│
+├── models/
+│
+└── docs/
+```
+
+---
+
+## 🎯 Hackathon Requirements
+
+- ✅ Offline-first
+- ✅ CPU-first
+- ✅ No external AI APIs
+- ✅ Local AI inference
+- ✅ Structured data extraction
+- ✅ SQLite storage
+- ✅ Open Source
+
+---
+
+## 🚀 Future Scope
+
+- Face matching from evidence images
+- Multi-case suspect linking
+- Geospatial crime mapping
+- Knowledge graph visualization
+- Digital evidence similarity search
+- AI-generated investigation summaries
+- Offline semantic search across cases
+
+---
+
+## 📄 License
+
+This project is released under the **GNU AGPL v3 License**.
