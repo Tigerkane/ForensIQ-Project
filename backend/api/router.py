@@ -16,12 +16,6 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.post("/process")
 async def process_evidence(file: UploadFile = File(...), db: Session = Depends(get_db)):
-    """
-    1. Ingests file
-    2. Identifies modality and extracts text locally
-    3. Runs local LLM for JSON structuring
-    4. Saves to SQLite
-    """
     file_path = os.path.join(UPLOAD_DIR, file.filename)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
@@ -29,7 +23,6 @@ async def process_evidence(file: UploadFile = File(...), db: Session = Depends(g
     text_content = ""
     file_extension = file.filename.split('.')[-1].lower()
     
-    # Step 1 & 2: Modality Extraction
     if file_extension in ['txt']:
         with open(file_path, "r", encoding="utf-8") as f:
             text_content = f.read()
@@ -45,35 +38,67 @@ async def process_evidence(file: UploadFile = File(...), db: Session = Depends(g
     if not text_content:
         raise HTTPException(status_code=500, detail="Failed to extract text from evidence.")
         
-    # Step 3: LLM Extraction (Offline)
+    # Local Offline Extraction
     structured_data = extract_entities_and_events(text_content)
     
-    # Step 4: Save to DB (Create Case if none exists for this demo)
+    # DB Insertion
     case = db.query(models.Case).first()
     if not case:
-        case = models.Case(title="Hackathon Demo Case")
+        case = models.Case(title="Operation Hackathon")
         db.add(case)
         db.commit()
         db.refresh(case)
         
-    # Add Document
     doc = models.Document(case_id=case.case_id, filename=file.filename, type=file_extension.upper())
     db.add(doc)
     
-    # Add People
     for person in structured_data.get("people", []):
-        p = models.Person(case_id=case.case_id, name=person.get("name", "Unknown"), role=person.get("role", "Unknown"))
-        db.add(p)
+        db.add(models.Person(case_id=case.case_id, name=person.get("name", "Unknown"), role=person.get("role", "Unknown")))
         
-    # Add Events
+    for org in structured_data.get("organizations", []):
+        db.add(models.Organization(case_id=case.case_id, name=org.get("name", "Unknown")))
+        
+    for veh in structured_data.get("vehicles", []):
+        db.add(models.Vehicle(case_id=case.case_id, registration=veh.get("registration", "Unknown"), model=veh.get("model", "Unknown")))
+        
+    for ev in structured_data.get("evidence", []):
+        db.add(models.Evidence(case_id=case.case_id, type=ev.get("type", "Item"), description=ev.get("description", ""), source_document=file.filename))
+
     for event in structured_data.get("events", []):
-        e = models.Event(case_id=case.case_id, event=event.get("description", "Unknown Event"), location=event.get("location", "Unknown"))
-        db.add(e)
+        db.add(models.Event(case_id=case.case_id, event=event.get("description", "Event"), location=event.get("location", ""), time=event.get("time", "")))
         
+    for rel in structured_data.get("relationships", []):
+        db.add(models.Relationship(case_id=case.case_id, entity1=rel.get("entity1", ""), relation=rel.get("relation", ""), entity2=rel.get("entity2", "")))
+
     db.commit()
     
+    return {"status": "success", "structured_intelligence": structured_data}
+
+@router.get("/cases")
+def get_cases(db: Session = Depends(get_db)):
+    return db.query(models.Case).all()
+
+@router.get("/timeline/{case_id}")
+def get_timeline(case_id: int, db: Session = Depends(get_db)):
+    # Very basic sort by time string
+    events = db.query(models.Event).filter(models.Event.case_id == case_id).all()
+    return sorted(events, key=lambda x: str(x.time))
+
+@router.get("/entities/{case_id}")
+def get_entities(case_id: int, db: Session = Depends(get_db)):
     return {
-        "status": "success", 
-        "extracted_text_preview": text_content[:200] + "...", 
-        "structured_intelligence": structured_data
+        "people": db.query(models.Person).filter(models.Person.case_id == case_id).all(),
+        "organizations": db.query(models.Organization).filter(models.Organization.case_id == case_id).all(),
+        "vehicles": db.query(models.Vehicle).filter(models.Vehicle.case_id == case_id).all(),
+        "evidence": db.query(models.Evidence).filter(models.Evidence.case_id == case_id).all(),
+        "relationships": db.query(models.Relationship).filter(models.Relationship.case_id == case_id).all(),
+    }
+
+@router.get("/search")
+def search_evidence(query: str, db: Session = Depends(get_db)):
+    """Global search across all cases and entities."""
+    return {
+        "people": db.query(models.Person).filter(models.Person.name.contains(query)).all(),
+        "events": db.query(models.Event).filter(models.Event.description.contains(query)).all(),
+        "vehicles": db.query(models.Vehicle).filter(models.Vehicle.registration.contains(query)).all()
     }
