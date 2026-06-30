@@ -64,7 +64,8 @@ function App() {
         formData.append("file", files[i]);
         formData.append("model", selectedModel);
         
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+        // Hardcoding the Ngrok URL to guarantee it works for the demo without env variables
+        const apiUrl = "https://backshift-unselfish-detonate.ngrok-free.dev/api";
         const response = await fetch(`${apiUrl}/process`, { 
           method: "POST", 
           body: formData,
@@ -101,7 +102,8 @@ function App() {
     e.preventDefault();
     if (!searchQuery) return setSearchResults(null);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+      // Hardcoding the Ngrok URL to guarantee it works for the demo without env variables
+      const apiUrl = "https://backshift-unselfish-detonate.ngrok-free.dev/api";
       const response = await fetch(`${apiUrl}/search?query=${searchQuery}`, {
         headers: {
           "ngrok-skip-browser-warning": "true"
