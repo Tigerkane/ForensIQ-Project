@@ -59,7 +59,8 @@ security_node:
     - npm audit
     - npm install -g @commitlint/cli @commitlint/config-conventional
     - cd ..
-    - echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
+    - |
+      echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
     - commitlint --from HEAD~1
 
 secrets_scan:
