@@ -112,3 +112,24 @@ quality_radon:
   script:
     - pip install radon
     - radon cc backend/
+
+quality_pylint:
+  stage: lint
+  image: python:3.12
+  script:
+    - pip install pylint
+    - pylint --disable=C,R,W backend/
+
+quality_vulture:
+  stage: lint
+  image: python:3.12
+  script:
+    - pip install vulture
+    - vulture backend/ --min-confidence 100
+
+quality_pyupgrade:
+  stage: lint
+  image: python:3.12
+  script:
+    - pip install pyupgrade
+    - find backend -name "*.py" | xargs pyupgrade --py312-plus

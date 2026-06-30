@@ -1,5 +1,3 @@
-
-
 def extract_text_from_audio(filepath: str) -> str:
     """Extracts transcript from an audio file using local Whisper.cpp."""
     # For a hackathon MVP, we mock the subprocess call if the binary isn't perfectly configured

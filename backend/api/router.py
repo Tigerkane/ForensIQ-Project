@@ -40,7 +40,7 @@ async def process_evidence(
     file_extension = filename.split(".")[-1].lower()
 
     if file_extension in ["txt"]:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             text_content = f.read()
     elif file_extension in ["pdf"]:
         text_content = extract_text_from_pdf(file_path)
