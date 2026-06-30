@@ -1,5 +1,6 @@
 import fitz  # PyMuPDF
 
+
 def extract_text_from_pdf(filepath: str) -> str:
     """Extracts plain text from a given PDF file offline."""
     try:

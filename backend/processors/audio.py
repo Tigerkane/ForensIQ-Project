@@ -1,4 +1,4 @@
-import subprocess
+
 
 def extract_text_from_audio(filepath: str) -> str:
     """Extracts transcript from an audio file using local Whisper.cpp."""
@@ -11,5 +11,5 @@ def extract_text_from_audio(filepath: str) -> str:
         pass
     except Exception as e:
         print(f"Error running local Whisper: {e}")
-        
+
     return "[Transcript Extracted via Offline Whisper]: Witness states the suspect fled in a blue sedan heading north."

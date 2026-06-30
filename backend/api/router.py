@@ -1,58 +1,69 @@
-from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
-from sqlalchemy.orm import Session
-from database.database import get_db
-from database import models
-from processors.pdf import extract_text_from_pdf
-from processors.image import extract_text_from_image
-from processors.audio import extract_text_from_audio
-from services.llm import extract_entities_and_events
-import os
 import json
+import os
 import shutil
-import re
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from sqlalchemy.orm import Session
+
+from database import models
+from database.database import get_db
+from processors.audio import extract_text_from_audio
+from processors.image import extract_text_from_image
+from processors.pdf import extract_text_from_pdf
+from services.llm import extract_entities_and_events
+
 
 def ensure_string(val):
     if isinstance(val, list):
         return ", ".join(str(v) for v in val)
     return str(val) if val is not None else ""
 
+
 router = APIRouter()
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+
 @router.post("/process")
-async def process_evidence(file: UploadFile = File(...), model: str = Form("llama3"), db: Session = Depends(get_db)):
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
+async def process_evidence(
+    file: UploadFile = File(...),
+    model: str = Form("llama3"),
+    db: Session = Depends(get_db),
+):
+    filename = file.filename or "unknown_file"
+    file_path = os.path.join(UPLOAD_DIR, filename)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-        
+
     text_content = ""
-    file_extension = file.filename.split('.')[-1].lower()
-    
-    if file_extension in ['txt']:
+    file_extension = filename.split(".")[-1].lower()
+
+    if file_extension in ["txt"]:
         with open(file_path, "r", encoding="utf-8") as f:
             text_content = f.read()
-    elif file_extension in ['pdf']:
+    elif file_extension in ["pdf"]:
         text_content = extract_text_from_pdf(file_path)
-    elif file_extension in ['png', 'jpg', 'jpeg']:
+    elif file_extension in ["png", "jpg", "jpeg"]:
         text_content = extract_text_from_image(file_path)
-    elif file_extension in ['mp3', 'wav', 'm4a']:
+    elif file_extension in ["mp3", "wav", "m4a"]:
         text_content = extract_text_from_audio(file_path)
     else:
         raise HTTPException(status_code=400, detail="Unsupported file format.")
-        
+
     if not text_content:
-        raise HTTPException(status_code=500, detail="Failed to extract text from evidence.")
-        
+        raise HTTPException(
+            status_code=500, detail="Failed to extract text from evidence."
+        )
+
     # Local Offline Extraction (Shared Contract)
     structured_data = extract_entities_and_events(text_content, model_name=model)
-    
+
     risk_analysis = structured_data.get("risk_analysis", {})
     primary_suspect = structured_data.get("primary_suspect", {})
     insights = structured_data.get("investigation_insights", [])
     recommended_actions = structured_data.get("recommended_actions", [])
-    
+
     # DB Insertion: Create a NEW Case for every document to support Master Database View
     case = models.Case(
         title=f"Incident: {file.filename}",
@@ -64,75 +75,107 @@ async def process_evidence(file: UploadFile = File(...), model: str = Form("llam
         primary_suspect_confidence=primary_suspect.get("confidence", 0.0),
         primary_suspect_reasoning=json.dumps(primary_suspect.get("reasoning", [])),
         investigation_insights=json.dumps(insights),
-        recommended_actions=json.dumps(recommended_actions)
+        recommended_actions=json.dumps(recommended_actions),
     )
     db.add(case)
     db.commit()
     db.refresh(case)
-        
-    doc = models.Document(case_id=case.case_id, filename=file.filename, type=file_extension.upper())
+
+    doc = models.Document(
+        case_id=case.case_id, filename=file.filename, type=file_extension.upper()
+    )
     db.add(doc)
-    
+
     for person in structured_data.get("people", []):
-        db.add(models.Person(
-            case_id=case.case_id, 
-            name=person.get("name", "Unknown"), 
-            role=person.get("role", "Unknown"), 
-            confidence=person.get("confidence", 0.0)
-        ))
-        
+        db.add(
+            models.Person(
+                case_id=case.case_id,
+                name=person.get("name", "Unknown"),
+                role=person.get("role", "Unknown"),
+                confidence=person.get("confidence", 0.0),
+            )
+        )
+
     for org in structured_data.get("organizations", []):
-        db.add(models.Organization(
-            case_id=case.case_id, 
-            name=org.get("name", "Unknown"),
-            confidence=org.get("confidence", 0.0)
-        ))
-        
+        db.add(
+            models.Organization(
+                case_id=case.case_id,
+                name=org.get("name", "Unknown"),
+                confidence=org.get("confidence", 0.0),
+            )
+        )
+
     for veh in structured_data.get("vehicles", []):
-        db.add(models.Vehicle(case_id=case.case_id, registration=veh.get("registration", ""), model=veh.get("model", ""), confidence=veh.get("confidence", 0.0)))
-        
+        db.add(
+            models.Vehicle(
+                case_id=case.case_id,
+                registration=veh.get("registration", ""),
+                model=veh.get("model", ""),
+                confidence=veh.get("confidence", 0.0),
+            )
+        )
+
     for wep in structured_data.get("weapons", []):
-        db.add(models.Weapon(case_id=case.case_id, type=wep.get("type", ""), description=wep.get("description", ""), confidence=wep.get("confidence", 0.0)))
-        
+        db.add(
+            models.Weapon(
+                case_id=case.case_id,
+                type=wep.get("type", ""),
+                description=wep.get("description", ""),
+                confidence=wep.get("confidence", 0.0),
+            )
+        )
+
     for ev in structured_data.get("evidence", []):
-        db.add(models.Evidence(
-            case_id=case.case_id, 
-            type=ensure_string(ev.get("type", "Item")), 
-            description=ensure_string(ev.get("description", "")), 
-            importance=ensure_string(ev.get("importance", "Medium")),
-            linked_people=ensure_string(ev.get("linked_people", "")),
-            linked_events=ensure_string(ev.get("linked_events", "")),
-            reasoning=ensure_string(ev.get("reasoning", "")),
-            confidence=float(ev.get("confidence", 0.0)) if str(ev.get("confidence", 0.0)).replace('.','',1).isdigit() else 0.0,
-            source_document=file.filename
-        ))
+        db.add(
+            models.Evidence(
+                case_id=case.case_id,
+                type=ensure_string(ev.get("type", "Item")),
+                description=ensure_string(ev.get("description", "")),
+                importance=ensure_string(ev.get("importance", "Medium")),
+                linked_people=ensure_string(ev.get("linked_people", "")),
+                linked_events=ensure_string(ev.get("linked_events", "")),
+                reasoning=ensure_string(ev.get("reasoning", "")),
+                confidence=float(ev.get("confidence", 0.0))
+                if str(ev.get("confidence", 0.0)).replace(".", "", 1).isdigit()
+                else 0.0,
+                source_document=file.filename,
+            )
+        )
 
     for event in structured_data.get("timeline", []):
-        db.add(models.Event(
-            case_id=case.case_id, 
-            event=ensure_string(event.get("title", "Event")), 
-            location=ensure_string(event.get("location", "")), 
-            time=ensure_string(event.get("timestamp", "")),
-            description=ensure_string(event.get("description", "")),
-            entities_involved=ensure_string(event.get("entities_involved", "")),
-            supporting_evidence=ensure_string(event.get("supporting_evidence", "")),
-            reasoning=ensure_string(event.get("reasoning", "")),
-            confidence=float(event.get("confidence", 0.0)) if str(event.get("confidence", 0.0)).replace('.','',1).isdigit() else 0.0
-        ))
-        
+        db.add(
+            models.Event(
+                case_id=case.case_id,
+                event=ensure_string(event.get("title", "Event")),
+                location=ensure_string(event.get("location", "")),
+                time=ensure_string(event.get("timestamp", "")),
+                description=ensure_string(event.get("description", "")),
+                entities_involved=ensure_string(event.get("entities_involved", "")),
+                supporting_evidence=ensure_string(event.get("supporting_evidence", "")),
+                reasoning=ensure_string(event.get("reasoning", "")),
+                confidence=float(event.get("confidence", 0.0))
+                if str(event.get("confidence", 0.0)).replace(".", "", 1).isdigit()
+                else 0.0,
+            )
+        )
+
     for rel in structured_data.get("relationships", []):
-        db.add(models.Relationship(
-            case_id=case.case_id, 
-            entity1=ensure_string(rel.get("source_entity", "")), 
-            relation=ensure_string(rel.get("relationship_type", "")), 
-            entity2=ensure_string(rel.get("target_entity", "")),
-            supporting_evidence=ensure_string(rel.get("supporting_evidence", "")),
-            reasoning=ensure_string(rel.get("reasoning", "")),
-            confidence=float(rel.get("confidence", 0.0)) if str(rel.get("confidence", 0.0)).replace('.','',1).isdigit() else 0.0
-        ))
+        db.add(
+            models.Relationship(
+                case_id=case.case_id,
+                entity1=ensure_string(rel.get("source_entity", "")),
+                relation=ensure_string(rel.get("relationship_type", "")),
+                entity2=ensure_string(rel.get("target_entity", "")),
+                supporting_evidence=ensure_string(rel.get("supporting_evidence", "")),
+                reasoning=ensure_string(rel.get("reasoning", "")),
+                confidence=float(rel.get("confidence", 0.0))
+                if str(rel.get("confidence", 0.0)).replace(".", "", 1).isdigit()
+                else 0.0,
+            )
+        )
 
     db.commit()
-    
+
     return {"status": "success", "structured_intelligence": structured_data}
 
 
@@ -140,7 +183,13 @@ async def process_evidence(file: UploadFile = File(...), model: str = Form("llam
 def search_evidence(query: str, db: Session = Depends(get_db)):
     """Global search across all cases and entities."""
     return {
-        "people": db.query(models.Person).filter(models.Person.name.contains(query)).all(),
-        "events": db.query(models.Event).filter(models.Event.description.contains(query)).all(),
-        "vehicles": db.query(models.Vehicle).filter(models.Vehicle.registration.contains(query)).all()
+        "people": db.query(models.Person)
+        .filter(models.Person.name.contains(query))
+        .all(),
+        "events": db.query(models.Event)
+        .filter(models.Event.description.contains(query))
+        .all(),
+        "vehicles": db.query(models.Vehicle)
+        .filter(models.Vehicle.registration.contains(query))
+        .all(),
     }

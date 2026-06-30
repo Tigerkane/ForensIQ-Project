@@ -1,6 +1,7 @@
 import pytesseract
 from PIL import Image
 
+
 def extract_text_from_image(filepath: str) -> str:
     """Extracts text from an image using Tesseract OCR locally."""
     # Note: On Windows, you might need to specify the path to tesseract.exe

@@ -1,8 +1,10 @@
 import json
-import requests
 import re
 
+import requests
+
 OLLAMA_API_URL = "http://localhost:11434/api/generate"
+
 
 def extract_entities_and_events(text: str, model_name: str = "llama3") -> dict:
     """
@@ -63,29 +65,25 @@ def extract_entities_and_events(text: str, model_name: str = "llama3") -> dict:
     
     Return ONLY valid JSON. No markdown, no explanation.
     """
-    
+
     payload = {
         "model": model_name,
         "prompt": prompt,
-        "format": "json", 
+        "format": "json",
         "stream": False,
-        "options": {
-            "temperature": 0.0,
-            "num_predict": 4000,
-            "num_ctx": 8192
-        }
+        "options": {"temperature": 0.0, "num_predict": 4000, "num_ctx": 8192},
     }
-    
+
     try:
         response = requests.post(OLLAMA_API_URL, json=payload, timeout=1800)
         response.raise_for_status()
         data = response.json()
-        
+
         # Robust JSON cleaning
         raw_response = data.get("response", "{}")
-        raw_response = re.sub(r'```json\s*', '', raw_response)
-        raw_response = re.sub(r'```\s*', '', raw_response)
-        
+        raw_response = re.sub(r"```json\s*", "", raw_response)
+        raw_response = re.sub(r"```\s*", "", raw_response)
+
         parsed_data = json.loads(raw_response)
         return parsed_data
     except Exception as e:
