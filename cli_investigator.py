@@ -194,18 +194,33 @@ def main():
             print(f" [{idx + 1}] {f}")
         print()
         
-        try:
-            choice = int(input("Select a file number to analyze (or 0 for custom path): ")) - 1
-            if choice == -1:
-                file_path = input("Enter path to your case file (.txt): ")
-            elif choice < -1 or choice >= len(files):
-                print("Invalid selection.")
+        user_input = input("Select a file number to analyze (or enter a custom file path directly): ").strip()
+        
+        # Smart path checking (even if they forget the .txt extension)
+        if os.path.exists(user_input):
+            file_path = user_input
+        elif os.path.exists(user_input + ".txt"):
+            file_path = user_input + ".txt"
+        else:
+            try:
+                choice = int(user_input) - 1
+                if choice == -1:
+                    custom_path = input("Enter path to your case file (.txt): ").strip()
+                    if os.path.exists(custom_path):
+                        file_path = custom_path
+                    elif os.path.exists(custom_path + ".txt"):
+                        file_path = custom_path + ".txt"
+                    else:
+                        print(f"File not found: {custom_path}")
+                        return
+                elif choice < -1 or choice >= len(files):
+                    print("Invalid selection.")
+                    return
+                else:
+                    file_path = os.path.join(mock_dir, files[choice])
+            except ValueError:
+                print("Invalid input. Please enter a valid menu number or file path.")
                 return
-            else:
-                file_path = os.path.join(mock_dir, files[choice])
-        except ValueError:
-            print("Invalid input.")
-            return
 
     # Choose model
     print("\nSelect Local Model:")
