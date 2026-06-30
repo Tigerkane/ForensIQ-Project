@@ -198,6 +198,40 @@ SQLite Database
 
 ---
 
+## 💻 Offline CLI Tool Installation & Usage
+
+ForensIQ includes a fully compiled, offline-first forensic intelligence CLI tool. Judges and reviewers can download and run it directly without installing Python, dependencies, or cloning the repository.
+
+### Option 1: Standalone Binary (Recommended for Reviewers)
+1. Go to the **Releases** tab of the GitLab repository.
+2. Download the **`cli_investigator.exe`** binary from the Release Assets.
+3. Open Command Prompt or PowerShell and navigate to the folder where you downloaded it.
+4. Run the executable directly:
+   ```cmd
+   cli_investigator.exe
+   ```
+
+*Note: Ensure **Ollama** is running on your machine (configured with local models like `qwen2.5:3b` or `llama3.2`).*
+
+---
+
+### Option 2: Running from Source
+If you wish to run the CLI directly from source:
+1. Clone the repository and navigate to the project directory.
+2. Activate the virtual environment:
+   - **CMD:** `venv\Scripts\activate`
+   - **PowerShell:** `.\venv\Scripts\Activate.ps1`
+3. Install required libraries:
+   ```bash
+   pip install requests pymupdf
+   ```
+4. Run the CLI investigator script:
+   ```bash
+   python cli_investigator.py
+   ```
+
+---
+
 ## 📂 Project Structure
 
 ```
