@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from database import models
 from database.database import engine
+from api.router import router as api_router
 
 # Create SQLite tables
 models.Base.metadata.create_all(bind=engine)
@@ -11,7 +12,6 @@ app = FastAPI(
     title="ForensIQ API", description="Offline Investigation Intelligence API"
 )
 
-from api.router import router as api_router
 
 app.add_middleware(
     CORSMiddleware,
