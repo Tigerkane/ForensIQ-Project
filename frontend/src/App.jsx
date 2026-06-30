@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function App() {
   const [files, setFiles] = useState([]);
@@ -6,10 +6,39 @@ function App() {
   const [loadingText, setLoadingText] = useState("Analyzing Evidence...");
   const [intelligence, setIntelligence] = useState(null);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("summary");
+  const [activeTab, setActiveTab] = useState("timeline");
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedModel, setSelectedModel] = useState("llama3.2");
+  
+  const [loadingStage, setLoadingStage] = useState(0);
+  const [loadingSeconds, setLoadingSeconds] = useState(0);
+
+  useEffect(() => {
+    let timer;
+    let stageTimer;
+    if (loading) {
+      setLoadingSeconds(0);
+      setLoadingStage(0);
+      timer = setInterval(() => setLoadingSeconds(s => s + 1), 1000);
+      stageTimer = setInterval(() => setLoadingStage(s => Math.min(s + 1, 5)), 20000); // Change text every 20s
+    }
+    return () => {
+      clearInterval(timer);
+      clearInterval(stageTimer);
+    };
+  }, [loading]);
+
+  const loadingMessages = [
+    "Initializing offline AI model...",
+    "Parsing and structuring evidence...",
+    "Extracting critical entities and timelines...",
+    "Building relationship knowledge graph...",
+    "Evaluating risk scores and suspect profiles...",
+    "Deep inference in progress (This can take 5-10 minutes on CPU)..."
+  ];
 
   const handleFileChange = (e) => setFiles(Array.from(e.target.files));
 
@@ -33,8 +62,10 @@ function App() {
         setLoadingText(`Processing file ${i + 1} of ${files.length}: ${files[i].name}... (this may take a few minutes on CPU)`);
         const formData = new FormData(); 
         formData.append("file", files[i]);
+        formData.append("model", selectedModel);
         
-        const response = await fetch("http://localhost:8000/api/process", { method: "POST", body: formData });
+        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+        const response = await fetch(`${apiUrl}/process`, { method: "POST", body: formData });
         if (!response.ok) {
           const errText = await response.text();
           throw new Error(`Processing failed for ${files[i].name}: ${errText}`);
@@ -45,8 +76,13 @@ function App() {
       
       if (lastData) {
         setLoading(false);
-        setIntelligence(lastData.structured_intelligence);
-        setActiveTab("timeline");
+        if (!lastData.structured_intelligence || Object.keys(lastData.structured_intelligence).length === 0) {
+          setError("Extraction failed. The AI returned incomplete data. Please check the backend logs.");
+          setIntelligence(null);
+        } else {
+          setIntelligence(lastData.structured_intelligence);
+          setActiveTab("timeline");
+        }
       }
     } catch (err) { 
       setLoading(false);
@@ -59,13 +95,142 @@ function App() {
     e.preventDefault();
     if (!searchQuery) return setSearchResults(null);
     try {
-      const response = await fetch(`http://localhost:8000/api/search?query=${searchQuery}`);
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+      const response = await fetch(`${apiUrl}/search?query=${searchQuery}`);
       setSearchResults(await response.json());
     } catch (err) { console.error(err); }
   };
 
+  const handleDownloadReport = () => {
+    if (!intelligence) return;
+    let report = "=== FORENSIQ INTELLIGENCE REPORT ===\n\n";
+    
+    if (intelligence.executive_summary) {
+      report += "EXECUTIVE SUMMARY:\n" + intelligence.executive_summary + "\n\n";
+    }
+    
+    if (intelligence.risk_analysis) {
+      report += `RISK ANALYSIS: ${intelligence.risk_analysis.score}/10 (Confidence: ${Math.round(intelligence.risk_analysis.confidence*100)}%)\n`;
+      if (intelligence.risk_analysis.reasoning) {
+        report += "Reasoning: " + (Array.isArray(intelligence.risk_analysis.reasoning) ? intelligence.risk_analysis.reasoning.join("; ") : intelligence.risk_analysis.reasoning) + "\n";
+      }
+      report += "\n";
+    }
+    
+    if (intelligence.primary_suspect && intelligence.primary_suspect.entity) {
+      report += `PRIMARY SUSPECT: ${intelligence.primary_suspect.entity}\n`;
+      if (intelligence.primary_suspect.reasoning) {
+        report += "Reasoning: " + (Array.isArray(intelligence.primary_suspect.reasoning) ? intelligence.primary_suspect.reasoning.join("; ") : intelligence.primary_suspect.reasoning) + "\n";
+      }
+      report += "\n";
+    }
+
+    if (intelligence.investigation_insights && intelligence.investigation_insights.length > 0) {
+      report += "INVESTIGATION INSIGHTS:\n";
+      intelligence.investigation_insights.forEach(i => report += `- ${i}\n`);
+      report += "\n";
+    }
+
+    if (intelligence.recommended_actions && intelligence.recommended_actions.length > 0) {
+      report += "RECOMMENDED ACTIONS:\n";
+      intelligence.recommended_actions.forEach(a => report += `- ${a}\n`);
+      report += "\n";
+    }
+
+    if (intelligence.people && intelligence.people.length > 0) {
+      report += "PEOPLE INVOLVED:\n";
+      intelligence.people.forEach(p => report += `- ${p.name} (${p.role})\n`);
+      report += "\n";
+    }
+
+    if (intelligence.organizations && intelligence.organizations.length > 0) {
+      report += "ORGANIZATIONS:\n";
+      intelligence.organizations.forEach(o => report += `- ${o.name}\n`);
+      report += "\n";
+    }
+
+    if (intelligence.evidence && intelligence.evidence.length > 0) {
+      report += "PHYSICAL/DIGITAL EVIDENCE:\n";
+      intelligence.evidence.forEach(e => {
+        report += `- ${e.type}: ${e.description}\n`;
+        report += `  Importance: ${e.importance} | Linked to: ${e.linked_people || 'N/A'}\n`;
+      });
+      report += "\n";
+    }
+
+    if (intelligence.weapons && intelligence.weapons.length > 0) {
+      report += "WEAPONS RECOVERED:\n";
+      intelligence.weapons.forEach(w => report += `- ${w.type}: ${w.description}\n`);
+      report += "\n";
+    }
+    
+    if (intelligence.vehicles && intelligence.vehicles.length > 0) {
+      report += "VEHICLES:\n";
+      intelligence.vehicles.forEach(v => report += `- ${v.model} (${v.registration})\n`);
+      report += "\n";
+    }
+
+    if (intelligence.relationships && intelligence.relationships.length > 0) {
+      report += "RELATIONSHIP GRAPH:\n";
+      intelligence.relationships.forEach(r => report += `- [${r.source_entity}] --(${r.relationship_type})--> [${r.target_entity}]\n`);
+      report += "\n";
+    }
+
+    if (intelligence.contradictions && intelligence.contradictions.length > 0) {
+      report += "CONTRADICTIONS & CONFLICTING EVIDENCE:\n";
+      intelligence.contradictions.forEach(c => report += `- ${c.description}\n`);
+      report += "\n";
+    }
+    
+    report += "--- TIMELINE OF EVENTS ---\n";
+    (intelligence.timeline || []).forEach(e => {
+      report += `[${e.timestamp || "Unknown Time"}] ${e.title || "Event"}\n`;
+      if (e.location) report += `Location: ${e.location}\n`;
+      if (e.description) report += `${e.description}\n`;
+      report += "\n";
+    });
+
+    const blob = new Blob([report], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "ForensIQ_Report.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const currentData = intelligence;
   const eventsList = currentData?.timeline || [];
+
+  const uploadBox = (
+    <div className="bg-gray-900 p-6 rounded-xl border border-gray-800 shadow-xl max-w-md mx-auto w-full">
+      <h2 className="text-lg font-semibold mb-4 text-gray-200">Evidence Upload</h2>
+      <div className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${isDragging ? 'border-blue-500 bg-blue-900/20 scale-105' : 'border-gray-700 bg-gray-950 hover:border-blue-500'}`} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} onClick={() => document.getElementById('fileUpload').click()}>
+        <input id="fileUpload" type="file" multiple onChange={handleFileChange} className="hidden" />
+        <svg className={`w-16 h-16 mx-auto mb-4 transition-colors ${isDragging ? 'text-blue-500' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+        <p className="text-base font-medium text-gray-300">{files.length > 0 ? <span className="text-blue-500 font-bold">{files.length} File(s) Ready</span> : "Drag & Drop Evidence"}</p>
+        {files.length > 0 && <p className="text-sm text-gray-500 mt-2">{files.map(f => f.name).join(', ')}</p>}
+      </div>
+      {error && <p className="text-red-400 mt-3 text-sm">{error}</p>}
+      
+      <div className="mt-4">
+        <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Intelligence Model</label>
+        <select 
+          value={selectedModel} 
+          onChange={(e) => setSelectedModel(e.target.value)}
+          className="w-full bg-gray-950 border border-gray-700 text-gray-200 rounded-lg p-3 text-sm font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all cursor-pointer"
+        >
+          <option value="llama3.2">Llama 3.2 (Fast & Smart)</option>
+          <option value="qwen2.5:3b">Qwen 2.5 (Fast, Lower Accuracy)</option>
+        </select>
+      </div>
+      <button onClick={processEvidence} disabled={loading || files.length === 0} className="mt-6 w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:text-gray-500 py-4 rounded-lg text-base font-bold transition-colors shadow-blue-900/20 shadow-lg">
+        {loading ? "Inference Running..." : "Extract Intelligence"}
+      </button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-6 font-sans">
@@ -92,33 +257,81 @@ function App() {
         </div>
       )}
 
-      <main className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-        <div className="xl:col-span-1 space-y-3">
-          <div className="bg-gray-900 p-3 rounded-xl border border-gray-800 shadow-lg">
-            <h2 className="text-sm font-semibold mb-2 text-gray-200">Evidence Upload</h2>
-            <div className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all ${isDragging ? 'border-blue-500 bg-blue-900/20 scale-105' : 'border-gray-700 bg-gray-950 hover:border-blue-500'}`} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} onClick={() => document.getElementById('fileUpload').click()}>
-              <input id="fileUpload" type="file" multiple onChange={handleFileChange} className="hidden" />
-              <svg className={`w-12 h-12 mx-auto mb-3 transition-colors ${isDragging ? 'text-blue-500' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-              <p className="text-sm font-medium text-gray-300">{files.length > 0 ? <span className="text-blue-500 font-bold">{files.length} File(s) Ready</span> : "Drag & Drop Evidence"}</p>
-              {files.length > 0 && <p className="text-xs text-gray-500 mt-2">{files.map(f => f.name).join(', ')}</p>}
+      {loading ? (
+        <main className="flex flex-col items-center justify-center min-h-[70vh]">
+          <div className="bg-gray-900 border border-blue-500/30 p-10 rounded-2xl shadow-2xl shadow-blue-900/20 max-w-lg w-full text-center">
+            <div className="relative w-24 h-24 mx-auto mb-8">
+              <div className="absolute inset-0 border-4 border-blue-500/20 rounded-full"></div>
+              <div className="absolute inset-0 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <div className="absolute inset-0 flex items-center justify-center text-blue-400 font-bold text-xl">
+                {Math.floor(loadingSeconds / 60)}:{String(loadingSeconds % 60).padStart(2, '0')}
+              </div>
             </div>
-            {error && <p className="text-red-400 mt-2 text-xs">{error}</p>}
-            <button onClick={processEvidence} disabled={loading || files.length === 0} className="mt-4 w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:text-gray-500 py-3 rounded-lg text-sm font-bold transition-colors shadow-blue-900/20 shadow-lg">
-              {loading ? "Inference Running..." : "Extract Intelligence"}
-            </button>
+            
+            <h2 className="text-2xl font-bold text-blue-400 mb-2">Analyzing Evidence</h2>
+            
+            <div className="h-12 flex items-center justify-center">
+              <p className="text-gray-300 font-medium animate-pulse">
+                {loadingMessages[loadingStage]}
+              </p>
+            </div>
+            
+            <div className="mt-8 bg-gray-950 p-4 rounded-lg border border-gray-800 text-left">
+              <p className="text-xs text-gray-500 uppercase font-bold mb-1">Active Model</p>
+              <p className="text-sm text-blue-400 font-mono">{selectedModel}</p>
+              <p className="text-xs text-gray-600 mt-2">Running locally on CPU. 100% offline & secure.</p>
+            </div>
+          </div>
+        </main>
+      ) : (!intelligence) ? (
+        <main className="flex flex-col items-center justify-center min-h-[70vh]">
+          {uploadBox}
+        </main>
+      ) : (
+        <main className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+          <div className="xl:col-span-1 space-y-3">
+            {uploadBox}
+            
+            {intelligence && intelligence.risk_analysis && (
+              <div className="bg-gray-900 border border-orange-500/50 p-4 rounded-xl shadow-lg">
+                <h3 className="text-orange-400 font-bold text-sm mb-2">Case Risk Score</h3>
+                <div className="w-full bg-gray-800 rounded-full h-2 mt-1 mb-2">
+                  <div className="bg-orange-500 h-2 rounded-full" style={{width: `${(intelligence.risk_analysis.score/10)*100}%`}}></div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-orange-200/50">Conf: {Math.round(intelligence.risk_analysis.confidence*100)}%</span>
+                  <span className="text-xs text-orange-300 font-bold">{intelligence.risk_analysis.score} / 10</span>
+                </div>
+              </div>
+            )}
+            
+            {intelligence && intelligence.primary_suspect && intelligence.primary_suspect.entity && (
+              <div className="bg-gray-900 border border-yellow-500/50 p-4 rounded-xl shadow-lg">
+                <h3 className="text-yellow-400 font-bold text-sm mb-2">Primary Suspect</h3>
+                <div className="flex justify-between items-end">
+                  <p className="text-lg text-yellow-100 font-bold truncate">{intelligence.primary_suspect.entity}</p>
+                  <span className="text-xs text-yellow-300/70 whitespace-nowrap ml-2">{Math.round(intelligence.primary_suspect.confidence*100)}% sure</span>
+                </div>
+              </div>
+            )}
+            
+            {intelligence && (
+              <div className="flex flex-col space-y-3 mt-4">
+                <button onClick={() => setIsModalOpen(true)} className="w-full py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold rounded-lg border border-gray-700 transition-colors shadow-lg">
+                  View Other Sections
+                </button>
+                <button onClick={handleDownloadReport} className="w-full py-3 flex items-center justify-center space-x-2 bg-blue-900/30 hover:bg-blue-800/40 text-blue-400 font-bold rounded-lg border border-blue-800/50 transition-colors shadow-lg">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                  <span>Download Report (.txt)</span>
+                </button>
+              </div>
+            )}
           </div>
           
-          {intelligence && (
-            <button onClick={() => setActiveTab('summary')} className={`w-full py-3 mt-2 rounded-lg font-bold transition-all ${activeTab === 'summary' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}>
-              View Executive Summary
-            </button>
-          )}
-        </div>
-        
-        <div className="xl:col-span-3 bg-gray-900 rounded-xl border border-gray-800 flex flex-col h-[900px] shadow-lg relative">
+          <div className="xl:col-span-3 bg-gray-900 rounded-xl border border-gray-800 flex flex-col h-[900px] shadow-lg relative">
           
           <div className="flex border-b border-gray-800 bg-gray-950 rounded-t-xl overflow-hidden">
-            {['summary', 'timeline', 'entities', 'relationships'].map(tab => (
+            {['timeline', 'entities', 'relationships'].map(tab => (
               <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-4 text-sm font-bold capitalize transition-colors ${activeTab === tab ? 'bg-gray-800 text-blue-500 border-b-2 border-blue-500' : 'text-gray-500 hover:bg-gray-800/50'}`}>
                 {tab}
               </button>
@@ -129,88 +342,7 @@ function App() {
             {!currentData && !loading && <div className="h-full flex items-center justify-center"><p className="text-gray-600 italic">Upload an investigation file or view Master Database.</p></div>}
             {loading && <div className="h-full flex flex-col items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div><p className="text-blue-500 animate-pulse font-medium">{loadingText}</p></div>}
             
-            {intelligence && activeTab === 'summary' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10">
-                {/* Left Column */}
-                <div className="space-y-6">
-                  {intelligence.risk_analysis && (
-                     <div className="bg-orange-900/20 border border-orange-500/50 p-6 rounded-xl shadow-lg">
-                       <h3 className="text-orange-400 font-bold text-lg mb-3">Case Risk Score</h3>
-                       <div className="w-full bg-gray-800 rounded-full h-4 mt-2 mb-2">
-                         <div className="bg-orange-500 h-4 rounded-full" style={{width: `${(intelligence.risk_analysis.score/10)*100}%`}}></div>
-                       </div>
-                       <div className="flex justify-between items-center mb-4">
-                         <span className="text-sm text-orange-200/50">Confidence: {Math.round(intelligence.risk_analysis.confidence*100)}%</span>
-                         <span className="text-sm text-orange-300 font-bold">{intelligence.risk_analysis.score} / 10</span>
-                       </div>
-                       <ul className="text-sm text-orange-200 space-y-2">
-                         {intelligence.risk_analysis.reasoning?.map((r, i) => <li key={i}>• {r}</li>)}
-                       </ul>
-                     </div>
-                  )}
-
-                  {intelligence.investigation_insights?.length > 0 && (
-                     <div className="bg-cyan-900/20 border border-cyan-500/50 p-6 rounded-xl shadow-lg">
-                       <h3 className="text-cyan-400 font-bold text-lg mb-4">Investigation Insights</h3>
-                       <ul className="text-sm text-cyan-200 space-y-3">
-                         {intelligence.investigation_insights.map((c, i) => <li key={i}>• {c}</li>)}
-                       </ul>
-                     </div>
-                  )}
-                  
-                  {intelligence.contradictions?.length > 0 && (
-                     <div className="bg-red-900/20 border border-red-500/50 p-6 rounded-xl shadow-lg">
-                       <h3 className="text-red-400 font-bold text-lg mb-4">Contradictions Detected</h3>
-                       <ul className="text-sm text-red-300 space-y-3">
-                         {intelligence.contradictions.map((c, i) => <li key={i}>• {c.description}</li>)}
-                       </ul>
-                     </div>
-                  )}
-                </div>
-
-                {/* Right Column */}
-                <div className="space-y-6">
-                  {intelligence.primary_suspect && intelligence.primary_suspect.entity && (
-                     <div className="bg-yellow-900/20 border border-yellow-500/50 p-6 rounded-xl shadow-lg">
-                       <h3 className="text-yellow-400 font-bold text-lg mb-3">Primary Suspect</h3>
-                       <div className="flex justify-between items-end mb-4">
-                         <p className="text-2xl text-yellow-100 font-bold">{intelligence.primary_suspect.entity}</p>
-                         <span className="text-sm text-yellow-300/70">{Math.round(intelligence.primary_suspect.confidence*100)}% sure</span>
-                       </div>
-                       <div className="space-y-4">
-                         <div>
-                           <p className="text-sm font-semibold text-yellow-500 mb-2">Reasoning:</p>
-                           <ul className="text-sm text-yellow-200/80 space-y-2">
-                             {intelligence.primary_suspect.reasoning?.map((r, i) => <li key={i}>- {r}</li>)}
-                           </ul>
-                         </div>
-                         {intelligence.primary_suspect.supporting_evidence?.length > 0 && (
-                         <div>
-                           <p className="text-sm font-semibold text-yellow-500 mb-2">Key Evidence:</p>
-                           <ul className="text-sm text-yellow-200/80 space-y-2">
-                             {intelligence.primary_suspect.supporting_evidence?.map((r, i) => <li key={i}>- {r}</li>)}
-                           </ul>
-                         </div>
-                         )}
-                       </div>
-                     </div>
-                  )}
-
-                  {intelligence.recommended_actions?.length > 0 && (
-                     <div className="bg-green-900/20 border border-green-500/50 p-6 rounded-xl shadow-lg">
-                       <h3 className="text-green-400 font-bold text-lg mb-4">Recommended Actions</h3>
-                       <ul className="text-sm text-green-200 space-y-3">
-                         {intelligence.recommended_actions.map((a, i) => (
-                           <li key={i} className="flex gap-3">
-                             <span className="text-green-500">→</span> <span>{a}</span>
-                           </li>
-                         ))}
-                       </ul>
-                     </div>
-                  )}
-                </div>
-              </div>
-            )}
+            {/* Summary tab removed */}
 
             {intelligence && activeTab === 'timeline' && intelligence.executive_summary && (
               <div className="mb-6 bg-gray-800 p-5 rounded-lg border border-gray-700 shadow-md">
@@ -278,6 +410,104 @@ function App() {
           </div>
         </div>
       </main>
+    )}
+    
+    {/* ChatGPT-Style Modal Overlay */}
+    {isModalOpen && intelligence && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-6" onClick={() => setIsModalOpen(false)}>
+        <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-4xl max-h-[85vh] overflow-y-auto custom-scrollbar shadow-2xl relative" onClick={e => e.stopPropagation()}>
+          <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 p-2 rounded-full transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+          
+          <div className="p-8">
+            <h2 className="text-2xl font-bold text-white mb-6 border-b border-gray-800 pb-4">Executive Intelligence Summary</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Left Column */}
+              <div className="space-y-6">
+                {intelligence.risk_analysis && (
+                   <div className="bg-orange-900/20 border border-orange-500/50 p-6 rounded-xl shadow-lg">
+                     <h3 className="text-orange-400 font-bold text-lg mb-3">Case Risk Score</h3>
+                     <div className="w-full bg-gray-800 rounded-full h-4 mt-2 mb-2">
+                       <div className="bg-orange-500 h-4 rounded-full" style={{width: `${(intelligence.risk_analysis.score/10)*100}%`}}></div>
+                     </div>
+                     <div className="flex justify-between items-center mb-4">
+                       <span className="text-sm text-orange-200/50">Confidence: {Math.round(intelligence.risk_analysis.confidence*100)}%</span>
+                       <span className="text-sm text-orange-300 font-bold">{intelligence.risk_analysis.score} / 10</span>
+                     </div>
+                     <ul className="text-sm text-orange-200 space-y-2">
+                       {intelligence.risk_analysis.reasoning?.map((r, i) => <li key={i}>• {r}</li>)}
+                     </ul>
+                   </div>
+                )}
+
+                {intelligence.investigation_insights?.length > 0 && (
+                   <div className="bg-cyan-900/20 border border-cyan-500/50 p-6 rounded-xl shadow-lg">
+                     <h3 className="text-cyan-400 font-bold text-lg mb-4">Investigation Insights</h3>
+                     <ul className="text-sm text-cyan-200 space-y-3">
+                       {intelligence.investigation_insights.map((c, i) => <li key={i}>• {c}</li>)}
+                     </ul>
+                   </div>
+                )}
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-6">
+                {intelligence.primary_suspect && intelligence.primary_suspect.entity && (
+                   <div className="bg-yellow-900/20 border border-yellow-500/50 p-6 rounded-xl shadow-lg">
+                     <h3 className="text-yellow-400 font-bold text-lg mb-3">Primary Suspect</h3>
+                     <div className="flex justify-between items-end mb-4">
+                       <p className="text-2xl text-yellow-100 font-bold">{intelligence.primary_suspect.entity}</p>
+                       <span className="text-sm text-yellow-300/70">{Math.round(intelligence.primary_suspect.confidence*100)}% sure</span>
+                     </div>
+                     <div className="space-y-4">
+                       <div>
+                         <p className="text-sm font-semibold text-yellow-500 mb-2">Reasoning:</p>
+                         <ul className="text-sm text-yellow-200/80 space-y-2">
+                           {intelligence.primary_suspect.reasoning?.map((r, i) => <li key={i}>- {r}</li>)}
+                         </ul>
+                       </div>
+                       {intelligence.primary_suspect.supporting_evidence?.length > 0 && (
+                       <div>
+                         <p className="text-sm font-semibold text-yellow-500 mb-2">Key Evidence:</p>
+                         <ul className="text-sm text-yellow-200/80 space-y-2">
+                           {intelligence.primary_suspect.supporting_evidence?.map((r, i) => <li key={i}>- {r}</li>)}
+                         </ul>
+                       </div>
+                       )}
+                     </div>
+                   </div>
+                )}
+
+                {intelligence.recommended_actions?.length > 0 && (
+                   <div className="bg-green-900/20 border border-green-500/50 p-6 rounded-xl shadow-lg">
+                     <h3 className="text-green-400 font-bold text-lg mb-4">Recommended Actions</h3>
+                     <ul className="text-sm text-green-200 space-y-3">
+                       {intelligence.recommended_actions.map((a, i) => (
+                         <li key={i} className="flex gap-3">
+                           <span className="text-green-500">→</span> <span>{a}</span>
+                         </li>
+                       ))}
+                     </ul>
+                   </div>
+                )}
+                
+                {intelligence.contradictions?.length > 0 && (
+                   <div className="bg-red-900/20 border border-red-500/50 p-6 rounded-xl shadow-lg">
+                     <h3 className="text-red-400 font-bold text-lg mb-4">Contradictions Detected</h3>
+                     <ul className="text-sm text-red-300 space-y-3">
+                       {intelligence.contradictions.map((c, i) => <li key={i}>• {c.description}</li>)}
+                     </ul>
+                   </div>
+                )}
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    )}
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database.database import get_db
 from database import models
@@ -11,13 +11,18 @@ import json
 import shutil
 import re
 
+def ensure_string(val):
+    if isinstance(val, list):
+        return ", ".join(str(v) for v in val)
+    return str(val) if val is not None else ""
+
 router = APIRouter()
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.post("/process")
-async def process_evidence(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def process_evidence(file: UploadFile = File(...), model: str = Form("llama3"), db: Session = Depends(get_db)):
     file_path = os.path.join(UPLOAD_DIR, file.filename)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
@@ -41,7 +46,7 @@ async def process_evidence(file: UploadFile = File(...), db: Session = Depends(g
         raise HTTPException(status_code=500, detail="Failed to extract text from evidence.")
         
     # Local Offline Extraction (Shared Contract)
-    structured_data = extract_entities_and_events(text_content)
+    structured_data = extract_entities_and_events(text_content, model_name=model)
     
     risk_analysis = structured_data.get("risk_analysis", {})
     primary_suspect = structured_data.get("primary_suspect", {})
@@ -92,38 +97,38 @@ async def process_evidence(file: UploadFile = File(...), db: Session = Depends(g
     for ev in structured_data.get("evidence", []):
         db.add(models.Evidence(
             case_id=case.case_id, 
-            type=ev.get("type", "Item"), 
-            description=ev.get("description", ""), 
-            importance=ev.get("importance", "Medium"),
-            linked_people=ev.get("linked_people", ""),
-            linked_events=ev.get("linked_events", ""),
-            reasoning=ev.get("reasoning", ""),
-            confidence=ev.get("confidence", 0.0),
+            type=ensure_string(ev.get("type", "Item")), 
+            description=ensure_string(ev.get("description", "")), 
+            importance=ensure_string(ev.get("importance", "Medium")),
+            linked_people=ensure_string(ev.get("linked_people", "")),
+            linked_events=ensure_string(ev.get("linked_events", "")),
+            reasoning=ensure_string(ev.get("reasoning", "")),
+            confidence=float(ev.get("confidence", 0.0)) if str(ev.get("confidence", 0.0)).replace('.','',1).isdigit() else 0.0,
             source_document=file.filename
         ))
 
     for event in structured_data.get("timeline", []):
         db.add(models.Event(
             case_id=case.case_id, 
-            event=event.get("title", "Event"), 
-            location=event.get("location", ""), 
-            time=event.get("timestamp", ""),
-            description=event.get("description", ""),
-            entities_involved=event.get("entities_involved", ""),
-            supporting_evidence=event.get("supporting_evidence", ""),
-            reasoning=event.get("reasoning", ""),
-            confidence=event.get("confidence", 0.0)
+            event=ensure_string(event.get("title", "Event")), 
+            location=ensure_string(event.get("location", "")), 
+            time=ensure_string(event.get("timestamp", "")),
+            description=ensure_string(event.get("description", "")),
+            entities_involved=ensure_string(event.get("entities_involved", "")),
+            supporting_evidence=ensure_string(event.get("supporting_evidence", "")),
+            reasoning=ensure_string(event.get("reasoning", "")),
+            confidence=float(event.get("confidence", 0.0)) if str(event.get("confidence", 0.0)).replace('.','',1).isdigit() else 0.0
         ))
         
     for rel in structured_data.get("relationships", []):
         db.add(models.Relationship(
             case_id=case.case_id, 
-            entity1=rel.get("source_entity", ""), 
-            relation=rel.get("relationship_type", ""), 
-            entity2=rel.get("target_entity", ""),
-            supporting_evidence=rel.get("supporting_evidence", ""),
-            reasoning=rel.get("reasoning", ""),
-            confidence=rel.get("confidence", 0.0)
+            entity1=ensure_string(rel.get("source_entity", "")), 
+            relation=ensure_string(rel.get("relationship_type", "")), 
+            entity2=ensure_string(rel.get("target_entity", "")),
+            supporting_evidence=ensure_string(rel.get("supporting_evidence", "")),
+            reasoning=ensure_string(rel.get("reasoning", "")),
+            confidence=float(rel.get("confidence", 0.0)) if str(rel.get("confidence", 0.0)).replace('.','',1).isdigit() else 0.0
         ))
 
     db.commit()

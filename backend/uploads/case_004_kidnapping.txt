@@ -1,0 +1,132 @@
+========================================================= FORENSIQ
+INVESTIGATION FILE Case ID: FIQ-2026-114 Classification: Confidential
+=========================================================
+
+Incident Date: 9 February 2026
+
+Incident Time: Approximately 17:30 (last seen); ransom call received
+20:10
+
+Location: St. Augustine's School, Kondapur, Hyderabad (last seen) and
+Residence of the Malhotra family, Jubilee Hills, Hyderabad
+
+Missing Person: Aarav Malhotra, age 9, Class 4 student
+
+  -------------------
+  WITNESS STATEMENT
+  -------------------
+
+My name is Ritu Malhotra. I am Aarav's mother.
+
+Aarav usually returns home by school van at 16:45. On 9 February, the
+van arrived at our building gate at the usual time, but our driver,
+Suresh Pawar, told me Aarav was not on the van when it left school.
+
+I immediately called the school. The front office said Aarav had been
+picked up early at 15:50 by a man who presented an authorization slip
+claiming to be sent by us, signed with what appeared to be my
+husband's signature.
+
+I did not send anyone to collect Aarav, and my husband was in a
+meeting from 14:00 to 18:00 with three colleagues who can confirm his
+presence throughout.
+
+At 20:10, we received a call on my husband's personal mobile number
+demanding ₹50,00,000 for Aarav's safe return, with instructions to not
+involve the police.
+
+  --------------------------
+  SECOND WITNESS STATEMENT
+  --------------------------
+
+My name is Suresh Pawar. I am the school van driver for the
+Malhotra family and three other families on the same route.
+
+I arrived at the school gate at 15:45 as usual to wait for pickup
+time. I did not see Aarav leave early. I assumed he was inside until
+the regular dismissal at 15:50, at which point the front office staff
+told me he had "already left with a guardian."
+
+I have driven this route for six years and know Aarav by sight. I did
+not see who picked him up, as I was parked at the rear gate, not the
+front entrance where pickups are normally verified.
+
+I want to mention that two weeks ago, I was asked by Mr. Malhotra's
+brother, Mr. Vikas Malhotra, whether I could "make an exception" and
+drop Aarav at a different address one day, for a "family event." I
+declined, as this was against company policy, and I did not report
+this to Mrs. Malhotra at the time.
+
+  ---------------------------
+  THIRD WITNESS STATEMENT
+  ---------------------------
+
+My name is Father Thomas D'Souza. I am the school's administrative
+head.
+
+The authorization slip presented at 15:50 bore a signature resembling
+Mr. Rohan Malhotra's, along with a photocopy of a family ID card. Our
+front desk staff, who are new and had not previously verified the
+Malhotra family's authorized contacts, accepted it without calling
+the registered parent numbers, which is against our standard
+procedure.
+
+The man who presented the slip was described as approximately 40
+years old, of medium build, wearing a grey shirt, and arrived in a
+white sedan. He did not enter the building and waited near the gate.
+
+Our gate CCTV captured the white sedan but not its number plate
+clearly, due to glare. The man's face was partially visible but not
+identifiable with certainty.
+
+  ---------------------
+  INVESTIGATION NOTES
+  ---------------------
+
+Known Individuals - Ritu Malhotra (Mother) - Rohan Malhotra (Father)
+- Vikas Malhotra (Paternal Uncle, lives separately, reported
+financial disputes with brother over inherited property) - Suresh
+Pawar (School Van Driver) - Father Thomas D'Souza (School
+Administrator) - Front Desk Staff (Names withheld, newly hired,
+under internal review)
+
+Organizations - St. Augustine's School, Kondapur - Malhotra Family
+Trust (property dispute between Rohan and Vikas Malhotra, ongoing
+since late 2025)
+
+Evidence - Forged authorization slip with photocopied ID - Partial
+CCTV footage showing white sedan and unidentifiable male, gate camera
+only - Ransom call recorded on Mr. Malhotra's phone, voice
+digitally distorted, lasting 47 seconds - Phone used for ransom call
+traced to a prepaid SIM activated using fake documents three days
+prior, signal triangulated to the Kondapur-Gachibowli corridor at
+time of call - Property dispute documents showing Vikas Malhotra
+contesting a will that left the majority share of the family's
+ancestral property to Rohan Malhotra, currently in mediation -
+Bank records showing Vikas Malhotra withdrew ₹3,00,000 in cash four
+days before the incident, citing "personal expenses" - A second ransom
+call received at 22:45, this time demanding the money be delivered to
+a location near Shamshabad, with the caller referencing details about
+Aarav's daily school routine that only someone close to the family
+would know
+
+Possible Contradiction Mr. Pawar states he did not report Vikas
+Malhotra's earlier request to anyone, which delayed this information
+reaching investigators by two weeks. Separately, Vikas Malhotra, when
+questioned, states he made the request to Mr. Pawar "as a joke" and
+denies any involvement, claiming his cash withdrawal was for an
+unrelated land deposit, which has not yet been verified.
+
+The man described at the school gate was of "medium build, approximately
+40," a description that does not clearly match either Vikas Malhotra
+(reported as tall and broad) or any other named individual, raising
+the possibility of a third party acting on someone else's behalf.
+
+Unresolved Question The ransom caller's knowledge of Aarav's routine
+suggests insider information, but it remains unclear whether this
+points to Vikas Malhotra directly, someone he hired, or an unrelated
+individual with separate access to the family's schedule, such as
+household staff not yet interviewed.
+
+========================================================= END OF FILE
+=========================================================

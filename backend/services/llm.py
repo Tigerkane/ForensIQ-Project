@@ -4,7 +4,7 @@ import re
 
 OLLAMA_API_URL = "http://localhost:11434/api/generate"
 
-def extract_entities_and_events(text: str) -> dict:
+def extract_entities_and_events(text: str, model_name: str = "llama3") -> dict:
     """
     Sends the cleaned text to the local Ollama LLM and enforces the strict Shared Contract JSON schema for Deep Investigation.
     """
@@ -65,18 +65,19 @@ def extract_entities_and_events(text: str) -> dict:
     """
     
     payload = {
-        "model": "qwen2.5:3b",
+        "model": model_name,
         "prompt": prompt,
         "format": "json", 
         "stream": False,
         "options": {
             "temperature": 0.0,
-            "num_predict": 4000
+            "num_predict": 4000,
+            "num_ctx": 8192
         }
     }
     
     try:
-        response = requests.post(OLLAMA_API_URL, json=payload, timeout=900)
+        response = requests.post(OLLAMA_API_URL, json=payload, timeout=1800)
         response.raise_for_status()
         data = response.json()
         
