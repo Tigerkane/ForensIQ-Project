@@ -4,8 +4,21 @@ import time
 import json
 import re
 import requests
+import threading
 
 OLLAMA_API_URL = "http://localhost:11434/api/generate"
+
+# A global flag to stop the timer thread
+stop_timer = False
+
+def timer_thread():
+    start_time = time.time()
+    while not stop_timer:
+        elapsed = time.time() - start_time
+        # Use carriage return \r to overwrite the line with the current elapsed time
+        sys.stdout.write(f"\r{Colors.WARNING}[+] Generating forensic intelligence... Elapsed: {elapsed:.1f}s{Colors.ENDC}")
+        sys.stdout.flush()
+        time.sleep(0.1)
 
 # ANSI Colors for beautiful terminal output
 class Colors:
@@ -66,9 +79,16 @@ def process_file_local(file_path, model_name):
     - "executive_summary": Write a comprehensive analytical investigation report. Answer: What happened? Why is it suspicious? What evidence supports this? What patterns are visible? What are the strongest findings?
     - "risk_analysis": Calculate a risk score (1-10), provide a dynamic confidence score (0.0-1.0), and list the exact reasons (e.g. "Weapon recovered", "Financial fraud").
     - "primary_suspect": Identify the main suspect. Include confidence, a list of reasons, and a list of supporting evidence.
+    - "investigation_insights": Generate 5-8 AI-generated observations (e.g. "Possible insider involvement").
+    - "recommended_actions": Generate 4-6 recommended investigation actions (e.g. "Seize records").
+    - "people": List all people. Provide role and dynamic confidence.
+    - "organizations": List companies or groups. Provide dynamic confidence.
+    - "vehicles": List vehicles with registration and model. Provide dynamic confidence.
+    - "weapons": Extract any weapons, firearms, blunt objects. Provide dynamic confidence.
+    - "evidence": List physical/digital evidence. Include type, description, importance ("Critical", "High", "Medium", "Low"), dynamic confidence, and reasoning. EXCLUDE WEAPONS.
     - "timeline": Extract EVERY significant event. Include timestamp, location, title, description, dynamic confidence, and reasoning.
-    - "evidence": List physical/digital evidence. Include type, description, importance ("Critical", "High", "Medium", "Low"), dynamic confidence, and reasoning.
-    - "people": List key people. Provide role and confidence.
+    - "relationships": Build a COMPLETE knowledge graph of connections. Include source_entity, relationship_type, target_entity, dynamic confidence, and reasoning.
+    - "contradictions": List any conflicting statements or evidence.
 
     Return this exact JSON structure:
     {{
@@ -84,11 +104,18 @@ def process_file_local(file_path, model_name):
         "reasoning": ["string"],
         "supporting_evidence": ["string"]
       }},
+      "investigation_insights": ["string"],
+      "recommended_actions": ["string"],
       "timeline": [
         {{ "timestamp": "string", "location": "string", "title": "string", "description": "string", "confidence": 0.96, "reasoning": "string" }}
       ],
       "people": [{{ "name": "string", "role": "string", "confidence": 0.84 }}],
-      "evidence": [{{ "type": "string", "description": "string", "importance": "string", "confidence": 0.94, "reasoning": "string" }}]
+      "organizations": [{{ "name": "string", "confidence": 0.96 }}],
+      "vehicles": [{{ "registration": "string", "model": "string", "confidence": 0.98 }}],
+      "weapons": [{{ "type": "string", "description": "string", "confidence": 0.95 }}],
+      "evidence": [{{ "type": "string", "description": "string", "importance": "string", "confidence": 0.94, "reasoning": "string" }}],
+      "relationships": [{{ "source_entity": "string", "relationship_type": "string", "target_entity": "string", "confidence": 0.88, "reasoning": "string" }}],
+      "contradictions": ["string"]
     }}
     
     TEXT:
@@ -105,8 +132,15 @@ def process_file_local(file_path, model_name):
         "options": {"temperature": 0.0, "num_predict": 4000, "num_ctx": 8192},
     }
 
+    global stop_timer
+    stop_timer = False
+
     print(f"\n{Colors.WARNING}[+] Sending case file to local Ollama ({model_name})...{Colors.ENDC}")
-    print(f"{Colors.WARNING}[+] Generating structured forensic intelligence. Please wait...{Colors.ENDC}")
+    
+    # Start the live timer thread
+    t = threading.Thread(target=timer_thread)
+    t.daemon = True
+    t.start()
     
     start_time = time.time()
     try:
@@ -121,9 +155,17 @@ def process_file_local(file_path, model_name):
         
         parsed = json.loads(raw_response)
         elapsed = time.time() - start_time
+        
+        # Stop the timer and clear the line to print the success message
+        stop_timer = True
+        t.join()
+        sys.stdout.write("\r" + " " * 80 + "\r")  # Clear line
         print(f"{Colors.GREEN}[✔] Inference complete in {elapsed:.2f} seconds!{Colors.ENDC}\n")
         return parsed
     except Exception as e:
+        stop_timer = True
+        t.join()
+        sys.stdout.write("\r" + " " * 80 + "\r")  # Clear line
         print(f"\n{Colors.FAIL}[ERROR] Local extraction failed: {e}{Colors.ENDC}")
         return None
 
@@ -161,15 +203,50 @@ def display_report(data):
         print(f"  - {reason}")
     print()
     
-    # 3. People Involved
+    # 3. Insights & Recommended Actions
     print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
-    print(f"{Colors.BLUE}{Colors.BOLD}                           PEOPLE INVOLVED{Colors.ENDC}")
+    print(f"{Colors.BLUE}{Colors.BOLD}                    AI INSIGHTS & RECOMMENDED ACTIONS{Colors.ENDC}")
     print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
-    for person in data.get("people", []):
-        print(f"• {Colors.BOLD}{person.get('name')}{Colors.ENDC} - Role: {person.get('role')} (Conf: {person.get('confidence', 0)*100:.1f}%)")
+    print(f"{Colors.BOLD}AI Observations:{Colors.ENDC}")
+    for insight in data.get("investigation_insights", []):
+        print(f"  • {Colors.CYAN}{insight}{Colors.ENDC}")
+    print()
+    print(f"{Colors.BOLD}Recommended Next Steps:{Colors.ENDC}")
+    for action in data.get("recommended_actions", []):
+        print(f"  [ ] {Colors.WARNING}{action}{Colors.ENDC}")
     print()
 
-    # 4. Evidence Locker
+    # 4. Entities (People, Orgs, Vehicles, Weapons)
+    print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
+    print(f"{Colors.BLUE}{Colors.BOLD}                            ENTITIES DETECTED{Colors.ENDC}")
+    print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
+    print(f"{Colors.BOLD}People:{Colors.ENDC}")
+    for person in data.get("people", []):
+        print(f"  • {Colors.BOLD}{person.get('name')}{Colors.ENDC} - {person.get('role')} (Conf: {person.get('confidence', 0)*100:.1f}%)")
+    print()
+    
+    orgs = data.get("organizations", [])
+    if orgs:
+        print(f"{Colors.BOLD}Organizations:{Colors.ENDC}")
+        for org in orgs:
+            print(f"  • {org.get('name')} (Conf: {org.get('confidence', 0)*100:.1f}%)")
+        print()
+
+    vehicles = data.get("vehicles", [])
+    if vehicles:
+        print(f"{Colors.BOLD}Vehicles:{Colors.ENDC}")
+        for vehicle in vehicles:
+            print(f"  • {vehicle.get('model')} [{vehicle.get('registration')}] (Conf: {vehicle.get('confidence', 0)*100:.1f}%)")
+        print()
+
+    weapons = data.get("weapons", [])
+    if weapons:
+        print(f"{Colors.BOLD}Weapons & Threat Objects:{Colors.ENDC}")
+        for weapon in weapons:
+            print(f"  • {weapon.get('type')} - {weapon.get('description')} (Conf: {weapon.get('confidence', 0)*100:.1f}%)")
+        print()
+
+    # 5. Evidence Locker
     print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
     print(f"{Colors.BLUE}{Colors.BOLD}                           EVIDENCE LOCKER & ASSETS{Colors.ENDC}")
     print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
@@ -178,7 +255,7 @@ def display_report(data):
         print(f"[{imp_color}{item.get('importance')}{Colors.ENDC}] {Colors.BOLD}{item.get('type')}{Colors.ENDC}: {item.get('description')}")
         print(f"      {Colors.CYAN}Analysis:{Colors.ENDC} {item.get('reasoning')}\n")
 
-    # 5. Timeline of Events
+    # 6. Timeline of Events
     print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
     print(f"{Colors.BLUE}{Colors.BOLD}                         INVESTIGATION TIMELINE{Colors.ENDC}")
     print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
@@ -186,6 +263,26 @@ def display_report(data):
         print(f"[{Colors.GREEN}{event.get('timestamp')}{Colors.ENDC}] {Colors.BOLD}{event.get('title')}{Colors.ENDC} @ {event.get('location')}")
         print(f"    Details: {event.get('description')}")
         print(f"    {Colors.CYAN}Significance:{Colors.ENDC} {event.get('reasoning')}\n")
+
+    # 7. Relationships (Knowledge Graph)
+    relationships = data.get("relationships", [])
+    if relationships:
+        print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
+        print(f"{Colors.BLUE}{Colors.BOLD}                       KNOWLEDGE GRAPH (RELATIONS){Colors.ENDC}")
+        print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
+        for rel in relationships:
+            print(f"  {Colors.BOLD}{rel.get('source_entity')}{Colors.ENDC} ──[{Colors.WARNING}{rel.get('relationship_type')}{Colors.ENDC}]──> {Colors.BOLD}{rel.get('target_entity')}{Colors.ENDC} (Conf: {rel.get('confidence', 0)*100:.1f}%)")
+            print(f"      {Colors.CYAN}Reasoning:{Colors.ENDC} {rel.get('reasoning')}\n")
+
+    # 8. Contradictions
+    contradictions = data.get("contradictions", [])
+    if contradictions:
+        print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
+        print(f"{Colors.FAIL}{Colors.BOLD}                      INVESTIGATION CONTRADICTIONS{Colors.ENDC}")
+        print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
+        for contra in contradictions:
+            print(f"  ⚠️ {Colors.FAIL}{contra}{Colors.ENDC}")
+        print()
 
 def main():
     clear_screen()
