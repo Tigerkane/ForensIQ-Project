@@ -15,8 +15,11 @@ def timer_thread():
     start_time = time.time()
     while not stop_timer:
         elapsed = time.time() - start_time
+        minutes = int(elapsed // 60)
+        seconds = int(elapsed % 60)
+        time_str = f"{minutes:02d}:{seconds:02d}"
         # Use carriage return \r to overwrite the line with the current elapsed time
-        sys.stdout.write(f"\r{Colors.WARNING}[+] Generating forensic intelligence... Elapsed: {elapsed:.1f}s{Colors.ENDC}")
+        sys.stdout.write(f"\r{Colors.WARNING}[+] Generating forensic intelligence... Elapsed: {time_str}{Colors.ENDC}")
         sys.stdout.flush()
         time.sleep(0.1)
 
@@ -155,12 +158,15 @@ def process_file_local(file_path, model_name):
         
         parsed = json.loads(raw_response)
         elapsed = time.time() - start_time
+        minutes = int(elapsed // 60)
+        seconds = int(elapsed % 60)
+        time_str = f"{minutes:02d}:{seconds:02d}"
         
         # Stop the timer and clear the line to print the success message
         stop_timer = True
         t.join()
         sys.stdout.write("\r" + " " * 80 + "\r")  # Clear line
-        print(f"{Colors.GREEN}[✔] Inference complete in {elapsed:.2f} seconds!{Colors.ENDC}\n")
+        print(f"{Colors.GREEN}[✔] Inference complete in {time_str}!{Colors.ENDC}\n")
         return parsed
     except Exception as e:
         stop_timer = True
