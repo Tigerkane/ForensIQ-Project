@@ -29,14 +29,9 @@ lint_backend:
   image: python:3.12
   script:
     - cd backend
-    - pip install ruff bandit flake8 vulture pylint pyupgrade
+    - pip install ruff bandit
     - ruff check .
-    - flake8 .
-    - vulture . --min-confidence 100 || true
-    - pylint **/*.py --disable=all || true
-    - pyupgrade --py312-plus **/*.py || true
     - bandit -c pyproject.toml -r .
-  allow_failure: true
 
 type_check_backend:
   stage: type_check
@@ -44,26 +39,34 @@ type_check_backend:
   script:
     - cd backend
     - pip install mypy pydantic fastapi sqlalchemy
-    - mypy . || true
+    - mypy .
 
-security_and_audit:
+security_python:
   stage: test
   image: python:3.12
   script:
-    - pip install pip-audit
+    - pip install uv semgrep
     - cd backend
-    - pip-audit || true
-    - cd ../frontend
-    - npm audit || true
-    - pip install semgrep
-    - semgrep ci || true
+    - uv audit
+    - cd ..
+    - semgrep scan --config auto --error
 
-changelog:
+security_node:
   stage: test
-  image: rust:latest
+  image: node:20
   script:
-    - cargo install git-cliff
-    - git-cliff -o CHANGELOG.md || true
+    - cd frontend
+    - npm audit
+    - npm install -g @commitlint/cli @commitlint/config-conventional
+    - cd ..
+    - echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
+    - commitlint --from HEAD~1
+
+secrets_scan:
+  stage: test
+  image: zricethezav/gitleaks
+  script:
+    - gitleaks detect --source . -v
 
 test_and_coverage_backend:
   stage: test

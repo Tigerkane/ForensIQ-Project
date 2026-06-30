@@ -15,7 +15,7 @@ from api.router import router as api_router
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For local development
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "https://forensiq.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
