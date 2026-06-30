@@ -68,10 +68,7 @@ function App() {
         const apiUrl = "https://backshift-unselfish-detonate.ngrok-free.dev/api";
         const response = await fetch(`${apiUrl}/process`, { 
           method: "POST", 
-          body: formData,
-          headers: {
-            "ngrok-skip-browser-warning": "true"
-          }
+          body: formData
         });
         if (!response.ok) {
           const errText = await response.text();
@@ -104,11 +101,7 @@ function App() {
     try {
       // Hardcoding the Ngrok URL to guarantee it works for the demo without env variables
       const apiUrl = "https://backshift-unselfish-detonate.ngrok-free.dev/api";
-      const response = await fetch(`${apiUrl}/search?query=${searchQuery}`, {
-        headers: {
-          "ngrok-skip-browser-warning": "true"
-        }
-      });
+      const response = await fetch(`${apiUrl}/search?query=${searchQuery}`);
       setSearchResults(await response.json());
     } catch (err) { console.error(err); }
   };
