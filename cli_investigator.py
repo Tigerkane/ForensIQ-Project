@@ -189,16 +189,20 @@ def main():
         print(f"{Colors.FAIL}No .txt files found in current directory.{Colors.ENDC}")
         file_path = input("Enter path to your case file (.txt): ")
     else:
+        print(" [0] Enter a custom file path...")
         for idx, f in enumerate(files):
             print(f" [{idx + 1}] {f}")
         print()
         
         try:
-            choice = int(input("Select a file number to analyze: ")) - 1
-            if choice < 0 or choice >= len(files):
+            choice = int(input("Select a file number to analyze (or 0 for custom path): ")) - 1
+            if choice == -1:
+                file_path = input("Enter path to your case file (.txt): ")
+            elif choice < -1 or choice >= len(files):
                 print("Invalid selection.")
                 return
-            file_path = os.path.join(mock_dir, files[choice])
+            else:
+                file_path = os.path.join(mock_dir, files[choice])
         except ValueError:
             print("Invalid input.")
             return
