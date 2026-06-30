@@ -1,7 +1,7 @@
 import json
+import os
 import re
 
-import os
 import requests
 
 OLLAMA_API_URL = os.environ.get("OLLAMA_API_URL", "http://localhost:11434/api/generate")
@@ -67,6 +67,26 @@ def extract_entities_and_events(text: str, model_name: str = "llama3") -> dict:
     Return ONLY valid JSON. No markdown, no explanation.
     """
 
+    gemini_key = os.environ.get("GEMINI_API_KEY")
+    if gemini_key:
+        try:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+            payload = {
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "responseMimeType": "application/json"
+                }
+            }
+            response = requests.post(url, json=payload, timeout=120)
+            response.raise_for_status()
+            data = response.json()
+            raw_response = data["candidates"][0]["content"]["parts"][0]["text"]
+            raw_response = re.sub(r"```json\s*", "", raw_response)
+            raw_response = re.sub(r"```\s*", "", raw_response)
+            return json.loads(raw_response)
+        except Exception as e:
+            print(f"Gemini API extraction failed: {e}. Falling back to Ollama.")
+
     payload = {
         "model": model_name,
         "prompt": prompt,
@@ -77,7 +97,9 @@ def extract_entities_and_events(text: str, model_name: str = "llama3") -> dict:
 
     try:
         headers = {"Bypass-Tunnel-Reminder": "true"}
-        response = requests.post(OLLAMA_API_URL, json=payload, headers=headers, timeout=1800)
+        response = requests.post(
+            OLLAMA_API_URL, json=payload, headers=headers, timeout=1800
+        )
         response.raise_for_status()
         data = response.json()
 
