@@ -76,7 +76,8 @@ def extract_entities_and_events(text: str, model_name: str = "llama3") -> dict:
     }
 
     try:
-        response = requests.post(OLLAMA_API_URL, json=payload, timeout=1800)
+        headers = {"Bypass-Tunnel-Reminder": "true"}
+        response = requests.post(OLLAMA_API_URL, json=payload, headers=headers, timeout=1800)
         response.raise_for_status()
         data = response.json()
 
