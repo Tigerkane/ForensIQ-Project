@@ -209,10 +209,14 @@ def display_report(data):
     print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
     print(f"{Colors.BOLD}AI Observations:{Colors.ENDC}")
     for insight in data.get("investigation_insights", []):
+        if isinstance(insight, dict):
+            insight = insight.get("description", str(insight))
         print(f"  • {Colors.CYAN}{insight}{Colors.ENDC}")
     print()
     print(f"{Colors.BOLD}Recommended Next Steps:{Colors.ENDC}")
     for action in data.get("recommended_actions", []):
+        if isinstance(action, dict):
+            action = action.get("description", str(action))
         print(f"  [ ] {Colors.WARNING}{action}{Colors.ENDC}")
     print()
 
@@ -281,7 +285,13 @@ def display_report(data):
         print(f"{Colors.FAIL}{Colors.BOLD}                      INVESTIGATION CONTRADICTIONS{Colors.ENDC}")
         print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
         for contra in contradictions:
-            print(f"  ⚠️ {Colors.FAIL}{contra}{Colors.ENDC}")
+            if isinstance(contra, dict):
+                desc = contra.get("description", "")
+                conf = contra.get("confidence")
+                conf_str = f" (Confidence: {conf*100:.1f}%)" if conf is not None else ""
+                print(f"  ⚠️ {Colors.FAIL}{desc}{Colors.WARNING}{conf_str}{Colors.ENDC}")
+            else:
+                print(f"  ⚠️ {Colors.FAIL}{contra}{Colors.ENDC}")
         print()
 
 def main():
