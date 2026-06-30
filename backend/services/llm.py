@@ -1,9 +1,10 @@
 import json
 import re
 
+import os
 import requests
 
-OLLAMA_API_URL = "http://localhost:11434/api/generate"
+OLLAMA_API_URL = os.environ.get("OLLAMA_API_URL", "http://localhost:11434/api/generate")
 
 
 def extract_entities_and_events(text: str, model_name: str = "llama3") -> dict:
