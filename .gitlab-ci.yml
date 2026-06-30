@@ -29,8 +29,15 @@ lint_backend:
   image: python:3.12
   script:
     - cd backend
-    - pip install ruff bandit
+    - pip install ruff
     - ruff check .
+
+bandit_security:
+  stage: test
+  image: python:3.12
+  script:
+    - cd backend
+    - pip install bandit
     - bandit -c pyproject.toml -r .
 
 type_check_backend:
@@ -41,24 +48,33 @@ type_check_backend:
     - pip install mypy pydantic fastapi sqlalchemy
     - mypy .
 
-security_python:
+python_audit:
   stage: test
   image: python:3.12
   script:
-    - pip install uv semgrep
+    - pip install uv
     - cd backend
     - uv audit
-    - cd ..
+
+sast_scan:
+  stage: test
+  image: python:3.12
+  script:
+    - pip install semgrep
     - semgrep scan --config auto --error
 
-security_node:
+node_audit:
   stage: test
   image: node:20
   script:
     - cd frontend
     - npm audit
+
+commit_lint:
+  stage: test
+  image: node:20
+  script:
     - npm install -g @commitlint/cli @commitlint/config-conventional
-    - cd ..
     - |
       echo "module.exports = {extends: ['@commitlint/config-conventional']}" > commitlint.config.js
     - commitlint --from HEAD~1
