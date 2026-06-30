@@ -37,8 +37,23 @@ def process_file_local(file_path, model_name):
         print(f"\n{Colors.FAIL}[ERROR] File '{file_path}' not found.{Colors.ENDC}")
         return None
 
-    with open(file_path, 'r', encoding='utf-8') as f:
-        text = f.read()
+    # Handle PDF files
+    if file_path.lower().endswith('.pdf'):
+        try:
+            import fitz  # PyMuPDF
+            text = ""
+            with fitz.open(file_path) as doc:
+                for page in doc:
+                    text += page.get_text()
+            if not text.strip():
+                print(f"\n{Colors.FAIL}[ERROR] PDF file is empty or scanned (no selectable text).{Colors.ENDC}")
+                return None
+        except Exception as e:
+            print(f"\n{Colors.FAIL}[ERROR] Failed to parse PDF: {e}{Colors.ENDC}")
+            return None
+    else:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            text = f.read()
 
     prompt = f"""
     You are an expert criminal intelligence AI and forensic investigator. Analyze the following text and extract deeply structured intelligence.
@@ -183,11 +198,11 @@ def main():
     if not os.path.exists(mock_dir):
         mock_dir = "."
         
-    files = [f for f in os.listdir(mock_dir) if f.endswith(".txt")]
+    files = [f for f in os.listdir(mock_dir) if f.lower().endswith((".txt", ".pdf"))]
     
     if not files:
-        print(f"{Colors.FAIL}No .txt files found in current directory.{Colors.ENDC}")
-        file_path = input("Enter path to your case file (.txt): ")
+        print(f"{Colors.FAIL}No .txt or .pdf files found in current directory.{Colors.ENDC}")
+        file_path = input("Enter path to your case file: ")
     else:
         print(" [0] Enter a custom file path...")
         for idx, f in enumerate(files):
@@ -196,20 +211,24 @@ def main():
         
         user_input = input("Select a file number to analyze (or enter a custom file path directly): ").strip()
         
-        # Smart path checking (even if they forget the .txt extension)
+        # Smart path checking (even if they forget the extension)
         if os.path.exists(user_input):
             file_path = user_input
         elif os.path.exists(user_input + ".txt"):
             file_path = user_input + ".txt"
+        elif os.path.exists(user_input + ".pdf"):
+            file_path = user_input + ".pdf"
         else:
             try:
                 choice = int(user_input) - 1
                 if choice == -1:
-                    custom_path = input("Enter path to your case file (.txt): ").strip()
+                    custom_path = input("Enter path to your case file (.txt or .pdf): ").strip()
                     if os.path.exists(custom_path):
                         file_path = custom_path
                     elif os.path.exists(custom_path + ".txt"):
                         file_path = custom_path + ".txt"
+                    elif os.path.exists(custom_path + ".pdf"):
+                        file_path = custom_path + ".pdf"
                     else:
                         print(f"File not found: {custom_path}")
                         return
@@ -231,8 +250,9 @@ def main():
 
     result = process_file_local(file_path, model_name)
     if result:
-        # Save output report locally
-        output_file = file_path.replace(".txt", "_forensiq_report.json")
+        # Save output report locally (works for both .txt and .pdf)
+        base_path = os.path.splitext(file_path)[0]
+        output_file = base_path + "_forensiq_report.json"
         with open(output_file, 'w') as out:
             json.dump(result, out, indent=2)
             
