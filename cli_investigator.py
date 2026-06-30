@@ -338,12 +338,52 @@ def main():
                 print("Invalid input. Please enter a valid menu number or file path.")
                 return
 
-    # Choose model
-    print("\nSelect Local Model:")
-    print(" [1] qwen2.5:3b")
-    print(" [2] llama3.2")
-    model_choice = input("Select model (default: qwen2.5:3b): ")
-    model_name = "llama3.2" if model_choice == "2" else "qwen2.5:3b"
+    # Choose model dynamically by querying local Ollama
+    print("\nDetecting downloaded local models...")
+    try:
+        r = requests.get("http://localhost:11434/api/tags", timeout=3)
+        if r.status_code == 200:
+            models_data = r.json().get("models", [])
+            downloaded_models = [m["name"] for m in models_data]
+        else:
+            downloaded_models = []
+    except Exception:
+        downloaded_models = []
+
+    if downloaded_models:
+        print("Select Local Model:")
+        for idx, m in enumerate(downloaded_models):
+            print(f" [{idx + 1}] {m}")
+        print(" [0] Enter a custom model name manually...")
+        print()
+        
+        try:
+            m_choice = input("Select model (default: 1): ").strip()
+            if not m_choice:
+                model_name = downloaded_models[0]
+            elif m_choice == "0":
+                model_name = input("Enter Ollama model name: ").strip()
+            else:
+                m_choice = int(m_choice) - 1
+                if 0 <= m_choice < len(downloaded_models):
+                    model_name = downloaded_models[m_choice]
+                else:
+                    model_name = downloaded_models[0]
+        except ValueError:
+            model_name = downloaded_models[0]
+    else:
+        # Fallback to hardcoded list if Ollama is unreachable
+        print("Select Local Model:")
+        print(" [1] qwen2.5:3b")
+        print(" [2] llama3.2")
+        print(" [3] Enter custom name...")
+        model_choice = input("Select model (default: 1): ").strip()
+        if model_choice == "2":
+            model_name = "llama3.2"
+        elif model_choice == "3":
+            model_name = input("Enter Ollama model name: ").strip()
+        else:
+            model_name = "qwen2.5:3b"
 
     result = process_file_local(file_path, model_name)
     if result:
