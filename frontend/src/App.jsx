@@ -65,7 +65,13 @@ function App() {
         formData.append("model", selectedModel);
         
         const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-        const response = await fetch(`${apiUrl}/process`, { method: "POST", body: formData });
+        const response = await fetch(`${apiUrl}/process`, { 
+          method: "POST", 
+          body: formData,
+          headers: {
+            "ngrok-skip-browser-warning": "true"
+          }
+        });
         if (!response.ok) {
           const errText = await response.text();
           throw new Error(`Processing failed for ${files[i].name}: ${errText}`);
@@ -96,7 +102,11 @@ function App() {
     if (!searchQuery) return setSearchResults(null);
     try {
       const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-      const response = await fetch(`${apiUrl}/search?query=${searchQuery}`);
+      const response = await fetch(`${apiUrl}/search?query=${searchQuery}`, {
+        headers: {
+          "ngrok-skip-browser-warning": "true"
+        }
+      });
       setSearchResults(await response.json());
     } catch (err) { console.error(err); }
   };
