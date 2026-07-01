@@ -82,7 +82,9 @@ commit_lint:
 
 secrets_scan:
   stage: test
-  image: zricethezav/gitleaks
+  image:
+    name: zricethezav/gitleaks
+    entrypoint: [""]
   script:
     - gitleaks detect --no-git --source . -v
 
