@@ -1,4 +1,6 @@
 # ForensIQ
+[![pipeline status](https://code.swecha.org/akhil08/forensiq/badges/main/pipeline.svg)](https://code.swecha.org/akhil08/forensiq/-/commits/main)
+
 ### Offline Investigation Intelligence Platform
 
 > **A hundred eyes. One truth.**
