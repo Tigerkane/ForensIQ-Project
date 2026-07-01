@@ -1,0 +1,66 @@
+{
+  "executive_summary": "A suspicious individual identified as 'T-800' entered a building through the back alley and was seen carrying a heavy duffel bag. A red Mustang (License Plate: XYZ-987) was parked outside. The suspect transferred $10,000 to an unknown account before fleeing the scene. Discarded evidence includes a crowbar.",
+  "risk_analysis": {
+    "score": 8.5,
+    "confidence": 0.92,
+    "reasoning": [
+      "Witness sighting of 'T-800', suspect's vehicle, transfer of funds"
+    ]
+  },
+  "primary_suspect": {
+    "entity": "'T-800'",
+    "confidence": 0.95,
+    "reasoning": [
+      "Witness sighting",
+      "Transfer of funds"
+    ],
+    "supporting_evidence": [
+      "Discarded crowbar near entrance",
+      "Red Mustang parked outside"
+    ]
+  },
+  "timeline": [
+    {
+      "timestamp": "23:15",
+      "location": "123 Elm Street, Springfield",
+      "title": "Witness sighting and vehicle observation",
+      "description": "Detective John Kim arrived at the scene. A witness named Sarah Connor reported seeing a suspicious individual (T-800) entering through the back alley with a heavy duffel bag. The suspect's red Mustang was parked outside.",
+      "confidence": 0.96,
+      "reasoning": "Witness sighting and vehicle observation"
+    },
+    {
+      "timestamp": "23:45",
+      "location": "123 Elm Street, Springfield",
+      "title": "Transfer of funds",
+      "description": "The suspect transferred $10,000 to an unknown account.",
+      "confidence": 0.98,
+      "reasoning": "Financial transaction reported by the witness"
+    }
+  ],
+  "people": [
+    {
+      "name": "Sarah Connor",
+      "role": "Witness"
+    },
+    {
+      "name": "Detective John Kim",
+      "role": "Investigator"
+    }
+  ],
+  "evidence": [
+    {
+      "type": "Physical evidence (Crowbar)",
+      "description": "Discarded crowbar found near the entrance of the building.",
+      "importance": "High",
+      "confidence": 0.94,
+      "reasoning": "Found at the scene and linked to the suspect's actions"
+    },
+    {
+      "type": "Digital evidence (Financial transaction)",
+      "description": "Transfer of $10,000 from the suspect's account.",
+      "importance": "High",
+      "confidence": 0.96,
+      "reasoning": "Reported by witness and linked to the suspect's actions"
+    }
+  ]
+}

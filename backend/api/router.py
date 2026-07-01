@@ -2,15 +2,14 @@ import json
 import os
 import shutil
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from sqlalchemy.orm import Session
-
 from database import models
 from database.database import get_db
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from processors.audio import extract_text_from_audio
 from processors.image import extract_text_from_image
 from processors.pdf import extract_text_from_pdf
 from services.llm import extract_entities_and_events
+from sqlalchemy.orm import Session
 
 
 def ensure_string(val):
@@ -135,9 +134,11 @@ async def process_evidence(
                 linked_people=ensure_string(ev.get("linked_people", "")),
                 linked_events=ensure_string(ev.get("linked_events", "")),
                 reasoning=ensure_string(ev.get("reasoning", "")),
-                confidence=float(ev.get("confidence", 0.0))
-                if str(ev.get("confidence", 0.0)).replace(".", "", 1).isdigit()
-                else 0.0,
+                confidence=(
+                    float(ev.get("confidence", 0.0))
+                    if str(ev.get("confidence", 0.0)).replace(".", "", 1).isdigit()
+                    else 0.0
+                ),
                 source_document=file.filename,
             )
         )
@@ -153,9 +154,11 @@ async def process_evidence(
                 entities_involved=ensure_string(event.get("entities_involved", "")),
                 supporting_evidence=ensure_string(event.get("supporting_evidence", "")),
                 reasoning=ensure_string(event.get("reasoning", "")),
-                confidence=float(event.get("confidence", 0.0))
-                if str(event.get("confidence", 0.0)).replace(".", "", 1).isdigit()
-                else 0.0,
+                confidence=(
+                    float(event.get("confidence", 0.0))
+                    if str(event.get("confidence", 0.0)).replace(".", "", 1).isdigit()
+                    else 0.0
+                ),
             )
         )
 
@@ -168,9 +171,11 @@ async def process_evidence(
                 entity2=ensure_string(rel.get("target_entity", "")),
                 supporting_evidence=ensure_string(rel.get("supporting_evidence", "")),
                 reasoning=ensure_string(rel.get("reasoning", "")),
-                confidence=float(rel.get("confidence", 0.0))
-                if str(rel.get("confidence", 0.0)).replace(".", "", 1).isdigit()
-                else 0.0,
+                confidence=(
+                    float(rel.get("confidence", 0.0))
+                    if str(rel.get("confidence", 0.0)).replace(".", "", 1).isdigit()
+                    else 0.0
+                ),
             )
         )
 

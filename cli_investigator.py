@@ -1,15 +1,17 @@
-import os
-import sys
-import time
 import json
+import os
 import re
-import requests
+import sys
 import threading
+import time
+
+import requests
 
 OLLAMA_API_URL = "http://localhost:11434/api/generate"
 
 # A global flag to stop the timer thread
 stop_timer = False
+
 
 def timer_thread():
     start_time = time.time()
@@ -19,24 +21,29 @@ def timer_thread():
         seconds = int(elapsed % 60)
         time_str = f"{minutes:02d}:{seconds:02d}"
         # Use carriage return \r to overwrite the line with the current elapsed time
-        sys.stdout.write(f"\r{Colors.WARNING}[+] Generating forensic intelligence... Elapsed: {time_str}{Colors.ENDC}")
+        sys.stdout.write(
+            f"\r{Colors.WARNING}[+] Generating forensic intelligence... Elapsed: {time_str}{Colors.ENDC}"
+        )
         sys.stdout.flush()
         time.sleep(0.1)
 
+
 # ANSI Colors for beautiful terminal output
 class Colors:
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    CYAN = '\033[96m'
-    GREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+    HEADER = "\033[95m"
+    BLUE = "\033[94m"
+    CYAN = "\033[96m"
+    GREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+
 
 def clear_screen():
-    os.system('cls' if os.name == 'nt' else 'clear')
+    os.system("cls" if os.name == "nt" else "clear")
+
 
 def print_banner():
     print(f"{Colors.BLUE}{Colors.BOLD}")
@@ -48,27 +55,31 @@ def print_banner():
     print(r"  ╚═╝      ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝╚══════╝╚═╝ ╚══▀▀═╝ ")
     print(f"       -- Offline Investigation Intelligence Terminal --{Colors.ENDC}\n")
 
+
 def process_file_local(file_path, model_name):
     if not os.path.exists(file_path):
         print(f"\n{Colors.FAIL}[ERROR] File '{file_path}' not found.{Colors.ENDC}")
         return None
 
     # Handle PDF files
-    if file_path.lower().endswith('.pdf'):
+    if file_path.lower().endswith(".pdf"):
         try:
             import fitz  # PyMuPDF
+
             text = ""
             with fitz.open(file_path) as doc:
                 for page in doc:
                     text += page.get_text()
             if not text.strip():
-                print(f"\n{Colors.FAIL}[ERROR] PDF file is empty or scanned (no selectable text).{Colors.ENDC}")
+                print(
+                    f"\n{Colors.FAIL}[ERROR] PDF file is empty or scanned (no selectable text).{Colors.ENDC}"
+                )
                 return None
         except Exception as e:
             print(f"\n{Colors.FAIL}[ERROR] Failed to parse PDF: {e}{Colors.ENDC}")
             return None
     else:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             text = f.read()
 
     prompt = f"""
@@ -138,30 +149,32 @@ def process_file_local(file_path, model_name):
     global stop_timer
     stop_timer = False
 
-    print(f"\n{Colors.WARNING}[+] Sending case file to local Ollama ({model_name})...{Colors.ENDC}")
-    
+    print(
+        f"\n{Colors.WARNING}[+] Sending case file to local Ollama ({model_name})...{Colors.ENDC}"
+    )
+
     # Start the live timer thread
     t = threading.Thread(target=timer_thread)
     t.daemon = True
     t.start()
-    
+
     start_time = time.time()
     try:
         response = requests.post(OLLAMA_API_URL, json=payload, timeout=1800)
         response.raise_for_status()
         data = response.json()
         raw_response = data.get("response", "{}")
-        
+
         # Clean JSON wrappers if any
         raw_response = re.sub(r"```json\s*", "", raw_response)
         raw_response = re.sub(r"```\s*", "", raw_response)
-        
+
         parsed = json.loads(raw_response)
         elapsed = time.time() - start_time
         minutes = int(elapsed // 60)
         seconds = int(elapsed % 60)
         time_str = f"{minutes:02d}:{seconds:02d}"
-        
+
         # Stop the timer and clear the line to print the success message
         stop_timer = True
         t.join()
@@ -175,44 +188,67 @@ def process_file_local(file_path, model_name):
         print(f"\n{Colors.FAIL}[ERROR] Local extraction failed: {e}{Colors.ENDC}")
         return None
 
+
 def display_report(data):
     if not data:
         return
-    
+
     clear_screen()
     print_banner()
-    
+
     # 1. Executive Summary
-    print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
-    print(f"{Colors.BLUE}{Colors.BOLD}                      EXECUTIVE FORENSIC SUMMARY{Colors.ENDC}")
-    print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
+    print(
+        f"{Colors.HEADER}========================================================================{Colors.ENDC}"
+    )
+    print(
+        f"{Colors.BLUE}{Colors.BOLD}                      EXECUTIVE FORENSIC SUMMARY{Colors.ENDC}"
+    )
+    print(
+        f"{Colors.HEADER}========================================================================{Colors.ENDC}"
+    )
     print(data.get("executive_summary", "No summary generated."))
     print()
-    
+
     # 2. Risk & Suspect Analysis
-    print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
-    print(f"{Colors.BLUE}{Colors.BOLD}                      RISK & SUSPECT ASSESSMENT{Colors.ENDC}")
-    print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
-    
+    print(
+        f"{Colors.HEADER}========================================================================{Colors.ENDC}"
+    )
+    print(
+        f"{Colors.BLUE}{Colors.BOLD}                      RISK & SUSPECT ASSESSMENT{Colors.ENDC}"
+    )
+    print(
+        f"{Colors.HEADER}========================================================================{Colors.ENDC}"
+    )
+
     risk = data.get("risk_analysis", {})
     suspect = data.get("primary_suspect", {})
-    
-    print(f"{Colors.BOLD}RISK LEVEL:{Colors.ENDC} {Colors.FAIL}{risk.get('score', 0)}/10{Colors.ENDC} (Confidence: {risk.get('confidence', 0)*100:.1f}%)")
+
+    print(
+        f"{Colors.BOLD}RISK LEVEL:{Colors.ENDC} {Colors.FAIL}{risk.get('score', 0)}/10{Colors.ENDC} (Confidence: {risk.get('confidence', 0)*100:.1f}%)"
+    )
     print(f"{Colors.BOLD}Risk Factors:{Colors.ENDC}")
     for reason in risk.get("reasoning", []):
         print(f"  - {reason}")
     print()
-    
-    print(f"{Colors.BOLD}PRIMARY SUSPECT:{Colors.ENDC} {Colors.WARNING}{suspect.get('entity', 'Unknown')}{Colors.ENDC} (Confidence: {suspect.get('confidence', 0)*100:.1f}%)")
+
+    print(
+        f"{Colors.BOLD}PRIMARY SUSPECT:{Colors.ENDC} {Colors.WARNING}{suspect.get('entity', 'Unknown')}{Colors.ENDC} (Confidence: {suspect.get('confidence', 0)*100:.1f}%)"
+    )
     print(f"{Colors.BOLD}Involvement Reasoning:{Colors.ENDC}")
     for reason in suspect.get("reasoning", []):
         print(f"  - {reason}")
     print()
-    
+
     # 3. Insights & Recommended Actions
-    print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
-    print(f"{Colors.BLUE}{Colors.BOLD}                    AI INSIGHTS & RECOMMENDED ACTIONS{Colors.ENDC}")
-    print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
+    print(
+        f"{Colors.HEADER}========================================================================{Colors.ENDC}"
+    )
+    print(
+        f"{Colors.BLUE}{Colors.BOLD}                    AI INSIGHTS & RECOMMENDED ACTIONS{Colors.ENDC}"
+    )
+    print(
+        f"{Colors.HEADER}========================================================================{Colors.ENDC}"
+    )
     print(f"{Colors.BOLD}AI Observations:{Colors.ENDC}")
     for insight in data.get("investigation_insights", []):
         if isinstance(insight, dict):
@@ -227,14 +263,22 @@ def display_report(data):
     print()
 
     # 4. Entities (People, Orgs, Vehicles, Weapons)
-    print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
-    print(f"{Colors.BLUE}{Colors.BOLD}                            ENTITIES DETECTED{Colors.ENDC}")
-    print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
+    print(
+        f"{Colors.HEADER}========================================================================{Colors.ENDC}"
+    )
+    print(
+        f"{Colors.BLUE}{Colors.BOLD}                            ENTITIES DETECTED{Colors.ENDC}"
+    )
+    print(
+        f"{Colors.HEADER}========================================================================{Colors.ENDC}"
+    )
     print(f"{Colors.BOLD}People:{Colors.ENDC}")
     for person in data.get("people", []):
-        print(f"  • {Colors.BOLD}{person.get('name')}{Colors.ENDC} - {person.get('role')} (Conf: {person.get('confidence', 0)*100:.1f}%)")
+        print(
+            f"  • {Colors.BOLD}{person.get('name')}{Colors.ENDC} - {person.get('role')} (Conf: {person.get('confidence', 0)*100:.1f}%)"
+        )
     print()
-    
+
     orgs = data.get("organizations", [])
     if orgs:
         print(f"{Colors.BOLD}Organizations:{Colors.ENDC}")
@@ -246,84 +290,131 @@ def display_report(data):
     if vehicles:
         print(f"{Colors.BOLD}Vehicles:{Colors.ENDC}")
         for vehicle in vehicles:
-            print(f"  • {vehicle.get('model')} [{vehicle.get('registration')}] (Conf: {vehicle.get('confidence', 0)*100:.1f}%)")
+            print(
+                f"  • {vehicle.get('model')} [{vehicle.get('registration')}] (Conf: {vehicle.get('confidence', 0)*100:.1f}%)"
+            )
         print()
 
     weapons = data.get("weapons", [])
     if weapons:
         print(f"{Colors.BOLD}Weapons & Threat Objects:{Colors.ENDC}")
         for weapon in weapons:
-            print(f"  • {weapon.get('type')} - {weapon.get('description')} (Conf: {weapon.get('confidence', 0)*100:.1f}%)")
+            print(
+                f"  • {weapon.get('type')} - {weapon.get('description')} (Conf: {weapon.get('confidence', 0)*100:.1f}%)"
+            )
         print()
 
     # 5. Evidence Locker
-    print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
-    print(f"{Colors.BLUE}{Colors.BOLD}                           EVIDENCE LOCKER & ASSETS{Colors.ENDC}")
-    print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
+    print(
+        f"{Colors.HEADER}========================================================================{Colors.ENDC}"
+    )
+    print(
+        f"{Colors.BLUE}{Colors.BOLD}                           EVIDENCE LOCKER & ASSETS{Colors.ENDC}"
+    )
+    print(
+        f"{Colors.HEADER}========================================================================{Colors.ENDC}"
+    )
     for item in data.get("evidence", []):
-        imp_color = Colors.FAIL if item.get('importance') == 'Critical' or item.get('importance') == 'High' else Colors.WARNING
-        print(f"[{imp_color}{item.get('importance')}{Colors.ENDC}] {Colors.BOLD}{item.get('type')}{Colors.ENDC}: {item.get('description')}")
+        imp_color = (
+            Colors.FAIL
+            if item.get("importance") == "Critical" or item.get("importance") == "High"
+            else Colors.WARNING
+        )
+        print(
+            f"[{imp_color}{item.get('importance')}{Colors.ENDC}] {Colors.BOLD}{item.get('type')}{Colors.ENDC}: {item.get('description')}"
+        )
         print(f"      {Colors.CYAN}Analysis:{Colors.ENDC} {item.get('reasoning')}\n")
 
     # 6. Timeline of Events
-    print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
-    print(f"{Colors.BLUE}{Colors.BOLD}                         INVESTIGATION TIMELINE{Colors.ENDC}")
-    print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
+    print(
+        f"{Colors.HEADER}========================================================================{Colors.ENDC}"
+    )
+    print(
+        f"{Colors.BLUE}{Colors.BOLD}                         INVESTIGATION TIMELINE{Colors.ENDC}"
+    )
+    print(
+        f"{Colors.HEADER}========================================================================{Colors.ENDC}"
+    )
     for event in data.get("timeline", []):
-        print(f"[{Colors.GREEN}{event.get('timestamp')}{Colors.ENDC}] {Colors.BOLD}{event.get('title')}{Colors.ENDC} @ {event.get('location')}")
+        print(
+            f"[{Colors.GREEN}{event.get('timestamp')}{Colors.ENDC}] {Colors.BOLD}{event.get('title')}{Colors.ENDC} @ {event.get('location')}"
+        )
         print(f"    Details: {event.get('description')}")
         print(f"    {Colors.CYAN}Significance:{Colors.ENDC} {event.get('reasoning')}\n")
 
     # 7. Relationships (Knowledge Graph)
     relationships = data.get("relationships", [])
     if relationships:
-        print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
-        print(f"{Colors.BLUE}{Colors.BOLD}                       KNOWLEDGE GRAPH (RELATIONS){Colors.ENDC}")
-        print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
+        print(
+            f"{Colors.HEADER}========================================================================{Colors.ENDC}"
+        )
+        print(
+            f"{Colors.BLUE}{Colors.BOLD}                       KNOWLEDGE GRAPH (RELATIONS){Colors.ENDC}"
+        )
+        print(
+            f"{Colors.HEADER}========================================================================{Colors.ENDC}"
+        )
         for rel in relationships:
-            print(f"  {Colors.BOLD}{rel.get('source_entity')}{Colors.ENDC} ──[{Colors.WARNING}{rel.get('relationship_type')}{Colors.ENDC}]──> {Colors.BOLD}{rel.get('target_entity')}{Colors.ENDC} (Conf: {rel.get('confidence', 0)*100:.1f}%)")
-            print(f"      {Colors.CYAN}Reasoning:{Colors.ENDC} {rel.get('reasoning')}\n")
+            print(
+                f"  {Colors.BOLD}{rel.get('source_entity')}{Colors.ENDC} ──[{Colors.WARNING}{rel.get('relationship_type')}{Colors.ENDC}]──> {Colors.BOLD}{rel.get('target_entity')}{Colors.ENDC} (Conf: {rel.get('confidence', 0)*100:.1f}%)"
+            )
+            print(
+                f"      {Colors.CYAN}Reasoning:{Colors.ENDC} {rel.get('reasoning')}\n"
+            )
 
     # 8. Contradictions
     contradictions = data.get("contradictions", [])
     if contradictions:
-        print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
-        print(f"{Colors.FAIL}{Colors.BOLD}                      INVESTIGATION CONTRADICTIONS{Colors.ENDC}")
-        print(f"{Colors.HEADER}========================================================================{Colors.ENDC}")
+        print(
+            f"{Colors.HEADER}========================================================================{Colors.ENDC}"
+        )
+        print(
+            f"{Colors.FAIL}{Colors.BOLD}                      INVESTIGATION CONTRADICTIONS{Colors.ENDC}"
+        )
+        print(
+            f"{Colors.HEADER}========================================================================{Colors.ENDC}"
+        )
         for contra in contradictions:
             if isinstance(contra, dict):
                 desc = contra.get("description", "")
                 conf = contra.get("confidence")
                 conf_str = f" (Confidence: {conf*100:.1f}%)" if conf is not None else ""
-                print(f"  ⚠️ {Colors.FAIL}{desc}{Colors.WARNING}{conf_str}{Colors.ENDC}")
+                print(
+                    f"  ⚠️ {Colors.FAIL}{desc}{Colors.WARNING}{conf_str}{Colors.ENDC}"
+                )
             else:
                 print(f"  ⚠️ {Colors.FAIL}{contra}{Colors.ENDC}")
         print()
 
+
 def main():
     clear_screen()
     print_banner()
-    
+
     # Simple menu to select file
     print("Available Local Mock Files:")
-    mock_dir = "backend/data/mock" # Adjust if your path is different
+    mock_dir = "backend/data/mock"  # Adjust if your path is different
     # Fallback to current dir if mock dir not found
     if not os.path.exists(mock_dir):
         mock_dir = "."
-        
+
     files = [f for f in os.listdir(mock_dir) if f.lower().endswith((".txt", ".pdf"))]
-    
+
     if not files:
-        print(f"{Colors.FAIL}No .txt or .pdf files found in current directory.{Colors.ENDC}")
+        print(
+            f"{Colors.FAIL}No .txt or .pdf files found in current directory.{Colors.ENDC}"
+        )
         file_path = input("Enter path to your case file: ")
     else:
         print(" [0] Enter a custom file path...")
         for idx, f in enumerate(files):
             print(f" [{idx + 1}] {f}")
         print()
-        
-        user_input = input("Select a file number to analyze (or enter a custom file path directly): ").strip()
-        
+
+        user_input = input(
+            "Select a file number to analyze (or enter a custom file path directly): "
+        ).strip()
+
         # Smart path checking (even if they forget the extension)
         if os.path.exists(user_input):
             file_path = user_input
@@ -335,7 +426,9 @@ def main():
             try:
                 choice = int(user_input) - 1
                 if choice == -1:
-                    custom_path = input("Enter path to your case file (.txt or .pdf): ").strip()
+                    custom_path = input(
+                        "Enter path to your case file (.txt or .pdf): "
+                    ).strip()
                     if os.path.exists(custom_path):
                         file_path = custom_path
                     elif os.path.exists(custom_path + ".txt"):
@@ -372,7 +465,7 @@ def main():
             print(f" [{idx + 1}] {m}")
         print(" [0] Enter a custom model name manually...")
         print()
-        
+
         try:
             m_choice = input("Select model (default: 1): ").strip()
             if not m_choice:
@@ -406,12 +499,15 @@ def main():
         # Save output report locally (works for both .txt and .pdf)
         base_path = os.path.splitext(file_path)[0]
         output_file = base_path + "_forensiq_report.json"
-        with open(output_file, 'w') as out:
+        with open(output_file, "w") as out:
             json.dump(result, out, indent=2)
-            
+
         input("\nPress Enter to view the generated Forensic Report...")
         display_report(result)
-        print(f"\n{Colors.GREEN}[✔] Full JSON report saved to: {output_file}{Colors.ENDC}")
-        
+        print(
+            f"\n{Colors.GREEN}[✔] Full JSON report saved to: {output_file}{Colors.ENDC}"
+        )
+
+
 if __name__ == "__main__":
     main()

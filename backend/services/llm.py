@@ -73,9 +73,7 @@ def extract_entities_and_events(text: str, model_name: str = "llama3") -> dict:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
             payload = {
                 "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {
-                    "responseMimeType": "application/json"
-                }
+                "generationConfig": {"responseMimeType": "application/json"},
             }
             response = requests.post(url, json=payload, timeout=120)
             response.raise_for_status()
