@@ -2,14 +2,15 @@ import json
 import os
 import shutil
 
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from sqlalchemy.orm import Session
+
 from database import models
 from database.database import get_db
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from processors.audio import extract_text_from_audio
 from processors.image import extract_text_from_image
 from processors.pdf import extract_text_from_pdf
 from services.llm import extract_entities_and_events
-from sqlalchemy.orm import Session
 
 
 def ensure_string(val):

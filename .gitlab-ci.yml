@@ -117,8 +117,10 @@ quality_pylint:
   stage: lint
   image: python:3.12
   script:
+    - cd backend
     - pip install pylint
-    - pylint --disable=C,R,W backend/
+    - pip install -r requirements.txt
+    - pylint --disable=C,R,W .
 
 quality_vulture:
   stage: lint

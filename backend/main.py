@@ -1,8 +1,9 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from api.router import router as api_router
 from database import models
 from database.database import engine
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 # Create SQLite tables
 models.Base.metadata.create_all(bind=engine)
