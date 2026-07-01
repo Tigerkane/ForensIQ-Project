@@ -25,10 +25,13 @@ explicit_package_bases = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--cov=./ --cov-fail-under=80 --cov-omit=test_llm.py,processors/*"
+addopts = "--cov=./ --cov-fail-under=80"
 testpaths = ["tests"]
 pythonpath = ["."]
 
 [tool.bandit]
 exclude_dirs = ["tests"]
 skips = ["B101"]
+
+[tool.coverage.run]
+omit = ["test_llm.py", "processors/*"]

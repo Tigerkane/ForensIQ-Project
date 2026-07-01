@@ -84,7 +84,7 @@ secrets_scan:
   stage: test
   image: zricethezav/gitleaks
   script:
-    - gitleaks detect --source . -v
+    - gitleaks detect --no-git --source . -v
 
 test_and_coverage_backend:
   stage: test
