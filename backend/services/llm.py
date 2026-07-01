@@ -85,7 +85,9 @@ def extract_entities_and_events(text: str, model_name: str = "llama3") -> dict:
         except Exception as e:
             print(f"Gemini API extraction failed: {e}. Falling back to Ollama.")
 
-    payload = {
+    import typing
+
+    ollama_payload: dict[str, typing.Any] = {
         "model": model_name,
         "prompt": prompt,
         "format": "json",
@@ -96,7 +98,7 @@ def extract_entities_and_events(text: str, model_name: str = "llama3") -> dict:
     try:
         headers = {"Bypass-Tunnel-Reminder": "true"}
         response = requests.post(
-            OLLAMA_API_URL, json=payload, headers=headers, timeout=1800
+            OLLAMA_API_URL, json=ollama_payload, headers=headers, timeout=1800
         )
         response.raise_for_status()
         data = response.json()
